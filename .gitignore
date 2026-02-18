@@ -1,5 +1,10 @@
-# Environment variables
+# Environment variables & secrets
 .env
+.env.*
+*.key
+*.pem
+secrets/
+*.secret
 
 # Python
 __pycache__/
@@ -11,6 +16,10 @@ venv/
 .venv/
 env/
 ENV/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
 
 # Streamlit
 .streamlit/secrets.toml
@@ -20,6 +29,7 @@ ENV/
 .vscode/
 *.swp
 *.swo
+*.code-workspace
 
 # OS
 .DS_Store
@@ -30,3 +40,5 @@ Thumbs.db
 
 # Uploaded files (temporary)
 uploads/
+tmp/
+temp/

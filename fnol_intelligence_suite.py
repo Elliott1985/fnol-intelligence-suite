@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 import google.generativeai as genai
 from PIL import Image
 
-# Load environment variables
+# Load environment variables (for local development)
 load_dotenv()
 
 # =============================================================================
@@ -36,8 +36,20 @@ STATE_ADJUSTER_MAP = {
     "AL": "Michael Chen",
 }
 
-# Configure Gemini
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+def get_api_key() -> Optional[str]:
+    """Get API key from Streamlit secrets (Cloud) or environment variable (local)."""
+    # Priority 1: Streamlit secrets (for Streamlit Cloud deployment)
+    try:
+        return st.secrets["GOOGLE_API_KEY"]
+    except (KeyError, FileNotFoundError):
+        pass
+    # Priority 2: Environment variable (for local development)
+    return os.getenv("GOOGLE_API_KEY")
+
+
+# Configure Gemini (deferred until key is available)
+GOOGLE_API_KEY = get_api_key()
 if GOOGLE_API_KEY:
     genai.configure(api_key=GOOGLE_API_KEY)
 
@@ -73,6 +85,7 @@ def analyze_claim_with_ai(
     description: str,
     loss_type: str,
     uploaded_images: list,
+    status_container,
 ) -> dict:
     """
     Use Gemini 2.0 Flash to analyze the claim for:
@@ -90,6 +103,7 @@ def analyze_claim_with_ai(
         }
 
     try:
+        status_container.update(label="Initializing AI Engine...", state="running")
         model = genai.GenerativeModel("gemini-2.0-flash")
 
         prompt = f"""You are an insurance claims AI analyst for an FNOL (First Notice of Loss) system.
@@ -108,6 +122,7 @@ SUMMARY: [2-3 sentence professional summary of the claim analysis]
 """
 
         # Include images if provided
+        status_container.update(label="Processing uploaded documentation...", state="running")
         content_parts = [prompt]
         for img in uploaded_images[:3]:  # Limit to 3 images
             try:
@@ -116,9 +131,12 @@ SUMMARY: [2-3 sentence professional summary of the claim analysis]
             except Exception:
                 continue
 
+        status_container.update(label="Running SIU Risk Analysis...", state="running")
         response = model.generate_content(content_parts)
         response_text = response.text
 
+        status_container.update(label="Evaluating Subrogation Potential...", state="running")
+        
         # Parse the response
         result = {
             "risk_level": "Medium",
@@ -147,9 +165,13 @@ SUMMARY: [2-3 sentence professional summary of the claim analysis]
             elif line.startswith("SUMMARY:"):
                 result["ai_summary"] = line.replace("SUMMARY:", "").strip()
 
+        status_container.update(label="Checking ALE/Total Loss Indicators...", state="running")
+        status_container.update(label="Analysis Complete ✓", state="complete")
+        
         return result
 
     except Exception as e:
+        status_container.update(label="Analysis Failed", state="error")
         return {
             "risk_level": "Unknown",
             "risk_flags": [f"AI analysis error: {str(e)}"],
@@ -163,119 +185,370 @@ SUMMARY: [2-3 sentence professional summary of the claim analysis]
 # STREAMLIT UI
 # =============================================================================
 
+def inject_custom_css():
+    """Inject custom CSS for Enterprise Light styling."""
+    st.markdown(
+        """
+        <style>
+        /* === Hide Streamlit Header/Footer === */
+        #MainMenu {visibility: hidden;}
+        header {visibility: hidden;}
+        footer {visibility: hidden;}
+        
+        /* === Global Container Shadows === */
+        [data-testid="stVerticalBlock"] > div:has(> [data-testid="stForm"]),
+        [data-testid="stExpander"],
+        .stAlert {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+        }
+        
+        /* === Card Containers === */
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            border-radius: 8px !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+        }
+        
+        /* === Sidebar Styling === */
+        [data-testid="stSidebar"] {
+            background: linear-gradient(180deg, #1E3A5F 0%, #2D4A6F 100%) !important;
+        }
+        
+        [data-testid="stSidebar"] * {
+            color: #ffffff !important;
+        }
+        
+        [data-testid="stSidebar"] hr {
+            border-color: rgba(255, 255, 255, 0.15) !important;
+            margin: 1rem 0 !important;
+        }
+        
+        [data-testid="stSidebar"] .stMarkdown p {
+            color: #E2E8F0 !important;
+            font-size: 0.9rem;
+        }
+        
+        /* === Form Styling === */
+        [data-testid="stForm"] {
+            padding: 1.5rem;
+        }
+        
+        /* === Input Fields === */
+        .stTextInput input,
+        .stTextArea textarea,
+        .stSelectbox > div > div {
+            border: 1px solid #CBD5E1 !important;
+            border-radius: 6px !important;
+        }
+        
+        .stTextInput input:focus,
+        .stTextArea textarea:focus {
+            border-color: #2962FF !important;
+            box-shadow: 0 0 0 2px rgba(41, 98, 255, 0.1) !important;
+        }
+        
+        /* === Labels === */
+        .stTextInput label,
+        .stTextArea label,
+        .stSelectbox label,
+        .stDateInput label,
+        .stFileUploader label {
+            font-weight: 600 !important;
+            color: #334155 !important;
+            font-size: 0.85rem !important;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        
+        /* === Primary Button === */
+        .stFormSubmitButton button {
+            background: linear-gradient(135deg, #2962FF 0%, #1E88E5 100%) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 6px !important;
+            font-weight: 600 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.75rem 1.5rem !important;
+            transition: all 0.2s ease;
+        }
+        
+        .stFormSubmitButton button:hover {
+            background: linear-gradient(135deg, #1E88E5 0%, #1565C0 100%) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(41, 98, 255, 0.3);
+        }
+        
+        /* === Metrics === */
+        [data-testid="stMetric"] {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        [data-testid="stMetric"] label {
+            color: #64748B !important;
+            font-size: 0.75rem !important;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        [data-testid="stMetricValue"] {
+            color: #1E293B !important;
+            font-weight: 700 !important;
+        }
+        
+        /* === Status Widget === */
+        [data-testid="stStatusWidget"] {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+        }
+        
+        /* === Emergency Alert Box === */
+        .emergency-alert {
+            background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3);
+        }
+        
+        .emergency-alert h3 {
+            color: white !important;
+            margin: 0 0 0.5rem 0;
+        }
+        
+        .emergency-alert p {
+            color: rgba(255, 255, 255, 0.95);
+            margin: 0;
+        }
+        
+        /* === Receipt Document === */
+        .receipt-header {
+            background: linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px 8px 0 0;
+            margin: -1rem -1rem 1rem -1rem;
+        }
+        
+        .receipt-header h2 {
+            color: white !important;
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        
+        .receipt-label {
+            color: #64748B;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        
+        .receipt-value {
+            color: #1E293B;
+            font-weight: 600;
+        }
+        
+        /* === Claim ID Highlight === */
+        .claim-id {
+            background: #EFF6FF;
+            color: #1E40AF;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: inline-block;
+            border: 1px solid #BFDBFE;
+        }
+        
+        /* === Section Headers === */
+        .section-header {
+            color: #1E293B;
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #2962FF;
+            margin-bottom: 1rem;
+        }
+        
+        /* === File Uploader === */
+        [data-testid="stFileUploader"] {
+            border: 2px dashed #CBD5E1;
+            border-radius: 8px;
+            padding: 1rem;
+            background: #F8FAFC;
+        }
+        
+        [data-testid="stFileUploader"]:hover {
+            border-color: #2962FF;
+            background: #EFF6FF;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_sidebar():
-    """Render the sidebar with security and compliance status."""
+    """Render the sidebar with branding and system status."""
     with st.sidebar:
-        st.title("🔐 Security & Compliance")
+        # Branding
+        st.markdown("## 🏢 FNOL Intelligence Suite")
+        st.caption("Enterprise Claims Intake Platform")
+        
         st.divider()
-
-        st.markdown("### System Status")
-
-        col1, col2 = st.columns([1, 3])
+        
+        # Product Info Section
+        st.markdown("### 📋 Product Info")
+        st.markdown("""
+        **Developer:** Elliott L.  
+        *(8+ Yrs CAT Adjusting Experience)*
+        
+        **Stack:** Python, Gemini 2.0 Flash, Streamlit
+        
+        **Compliance:**  
+        • SOC2-Ready Infrastructure  
+        • PII Redaction Enabled  
+        • Zero-Storage Data Policy
+        """)
+        
+        st.divider()
+        
+        # System Status
+        st.markdown("### ⚡ System Status")
+        
+        col1, col2 = st.columns([1, 4])
         with col1:
             st.markdown("🟢")
         with col2:
             st.markdown("**PII Redaction:** Active")
-
-        col1, col2 = st.columns([1, 3])
+        
+        col1, col2 = st.columns([1, 4])
         with col1:
             st.markdown("🟢")
         with col2:
             st.markdown("**Data Retention:** Zero-Storage")
-
-        col1, col2 = st.columns([1, 3])
+        
+        col1, col2 = st.columns([1, 4])
         with col1:
             st.markdown("🟢")
         with col2:
             st.markdown("**Infrastructure:** SOC2-Ready")
-
+        
         st.divider()
-
-        # API Status
-        st.markdown("### AI Engine")
+        
+        # AI Engine Status
+        st.markdown("### 🤖 AI Engine")
         if GOOGLE_API_KEY:
-            st.success("✅ Gemini 2.0 Flash Connected")
+            st.success("Gemini 2.0 Flash Connected")
         else:
-            st.warning("⚠️ API Key Not Configured")
-            st.caption("Set GOOGLE_API_KEY in .env file")
-
-
-def render_main_form():
-    """Render the main FNOL intake form."""
-    st.title("📋 First Notice of Loss")
-    st.markdown("*Enterprise FNOL Intake Engine*")
-    st.divider()
-
-    with st.form("fnol_form"):
-        st.subheader("Policy Information")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            policy_number = st.text_input(
-                "Policy Number *",
-                placeholder="e.g., POL-2026-001234",
-                help="Enter your policy number as shown on your declarations page",
-            )
-        with col2:
-            state = st.selectbox(
-                "State *",
-                options=[""] + list(STATE_ADJUSTER_MAP.keys()),
-                help="Select the state where the loss occurred",
+            st.warning("API Key Not Configured")
+            st.caption(
+                "Set GOOGLE_API_KEY in Streamlit Cloud secrets "
+                "or in your local .env file."
             )
 
-        st.subheader("Loss Details")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            loss_date = st.date_input(
-                "Date of Loss *",
-                value=date.today(),
-                help="The date when the loss/damage occurred",
+def render_intake_form():
+    """Render the FNOL intake form inside a card container."""
+    st.markdown("## 📋 First Notice of Loss")
+    st.caption("Structured FNOL intake with validation, AI-assisted triage, and smart routing.")
+    st.markdown("*Complete the form below to initiate your claim.*")
+    
+    with st.container(border=True):
+        with st.form("fnol_form"):
+            # Policy Information Section
+            st.markdown('<p class="section-header">Policy Information</p>', unsafe_allow_html=True)
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                policy_number = st.text_input(
+                    "Policy Number *",
+                    placeholder="e.g., POL-2026-001234",
+                    help="Enter your policy number as shown on your declarations page",
+                )
+            with col2:
+                state = st.selectbox(
+                    "State *",
+                    options=[""] + list(STATE_ADJUSTER_MAP.keys()),
+                    help="Select the state where the loss occurred",
+                )
+            
+            st.markdown("---")
+            
+            # Loss Details Section
+            st.markdown('<p class="section-header">Loss Details</p>', unsafe_allow_html=True)
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                loss_date = st.date_input(
+                    "Date of Loss *",
+                    value=date.today(),
+                    help="The date when the loss/damage occurred",
+                )
+            with col2:
+                loss_type = st.selectbox(
+                    "Type of Loss *",
+                    options=[""] + LOSS_TYPES,
+                    help="Select the primary cause of loss",
+                )
+            
+            description = st.text_area(
+                "Description of Loss *",
+                placeholder="Please describe in detail what happened, including the circumstances leading to the loss, the extent of damage, and any immediate actions taken...",
+                height=120,
+                help="Provide a detailed description of the incident",
             )
-        with col2:
-            loss_type = st.selectbox(
-                "Type of Loss *",
-                options=[""] + LOSS_TYPES,
-                help="Select the primary cause of loss",
+            
+            st.markdown("---")
+            
+            # Contact Information Section
+            st.markdown('<p class="section-header">Contact Information</p>', unsafe_allow_html=True)
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                email = st.text_input(
+                    "Email Address *",
+                    placeholder="your.email@example.com",
+                )
+            with col2:
+                phone = st.text_input(
+                    "Phone Number *",
+                    placeholder="(555) 123-4567",
+                )
+            
+            st.markdown("---")
+            
+            # Documentation Section
+            st.markdown('<p class="section-header">Supporting Documentation</p>', unsafe_allow_html=True)
+            
+            uploaded_files = st.file_uploader(
+                "Upload Photos & Documents",
+                type=["jpg", "jpeg", "png", "pdf", "heic"],
+                accept_multiple_files=True,
+                help="Upload photos of damage and any supporting documentation (max 3 for AI analysis)",
             )
-
-        description = st.text_area(
-            "Description of Loss *",
-            placeholder="Please describe in detail what happened, including the circumstances leading to the loss, the extent of damage, and any immediate actions taken...",
-            height=150,
-            help="Provide a detailed description of the incident",
-        )
-
-        st.subheader("Contact Information")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            email = st.text_input(
-                "Email Address *",
-                placeholder="your.email@example.com",
+            
+            st.markdown("")
+            submitted = st.form_submit_button(
+                "Submit Claim",
+                use_container_width=True,
+                type="primary",
             )
-        with col2:
-            phone = st.text_input(
-                "Phone Number *",
-                placeholder="(555) 123-4567",
-            )
-
-        st.subheader("Supporting Documentation")
-
-        uploaded_files = st.file_uploader(
-            "Upload Photos & Documents",
-            type=["jpg", "jpeg", "png", "pdf", "heic"],
-            accept_multiple_files=True,
-            help="Upload photos of damage and any supporting documentation",
-        )
-
-        st.divider()
-        submitted = st.form_submit_button(
-            "🚀 Submit Claim",
-            use_container_width=True,
-            type="primary",
-        )
-
+    
     return submitted, {
         "policy_number": policy_number,
         "state": state,
@@ -291,7 +564,7 @@ def render_main_form():
 def validate_form(data: dict) -> tuple[bool, list[str]]:
     """Validate the form data."""
     errors = []
-
+    
     if not data["policy_number"]:
         errors.append("Policy Number is required")
     if not data["state"]:
@@ -304,186 +577,170 @@ def validate_form(data: dict) -> tuple[bool, list[str]]:
         errors.append("Email Address is required")
     if not data["phone"]:
         errors.append("Phone Number is required")
-
+    
     return len(errors) == 0, errors
 
 
+def render_emergency_alert():
+    """Render high-visibility ALE/Total Loss alert."""
+    st.markdown(
+        """
+        <div class="emergency-alert">
+            <h3>🚨 IMMEDIATE ACTION REQUIRED</h3>
+            <p><strong>Emergency Housing Protocol Activated</strong></p>
+            <p>Our Temporary Housing Specialist has been automatically alerted and will contact you 
+            <strong>within 4 hours</strong> to arrange emergency accommodations.</p>
+            <p style="margin-top: 0.75rem; font-size: 0.9rem; opacity: 0.9;">
+            Do not worry about housing arrangements – we are taking care of this for you.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_claim_receipt(claim_id: str, data: dict, adjuster_info: tuple, ai_analysis: dict):
-    """Render the claim confirmation receipt."""
-    st.divider()
-    st.markdown("---")
-
-    # ALE/Total Loss Emergency Alert
+    """Render the formal claim confirmation receipt."""
+    
+    # Emergency Alert (if applicable)
     if ai_analysis.get("ale_alert"):
-        st.error(
-            """
-            ### 🚨 Immediate Action Required
-            
-            **Emergency Housing Protocol Activated**
-            
-            Our Temporary Housing Specialist has been automatically alerted and will contact you 
-            **within 4 hours** to arrange emergency accommodations.
-            
-            **Do not worry about housing arrangements** – we are taking care of this for you.
-            """
-        )
-        st.divider()
-
-    # Professional Receipt
+        render_emergency_alert()
+    
+    st.markdown("---")
+    
+    # Success Banner
     st.success("### ✅ Claim Successfully Submitted")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("#### Claim Details")
-        st.markdown(f"**Claim Number:** `{claim_id}`")
-        st.markdown(f"**Policy Number:** {data['policy_number']}")
-        st.markdown(f"**Date of Loss:** {data['loss_date'].strftime('%B %d, %Y')}")
-        st.markdown(f"**Type of Loss:** {data['loss_type']}")
-
-    with col2:
-        st.markdown("#### Your Adjuster")
-        if adjuster_info:
-            st.markdown(f"**Assigned Adjuster:** {adjuster_info[0]}")
-            st.markdown(f"**Licensed in:** {adjuster_info[1]}")
-        st.markdown(f"**Contact Email:** {data['email']}")
-        st.markdown(f"**Contact Phone:** {data['phone']}")
-
-    st.divider()
-
-    # AI Analysis Summary
-    st.markdown("#### 🤖 AI Triage Summary")
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        risk_color = {"Low": "🟢", "Medium": "🟡", "High": "🔴"}.get(
-            ai_analysis["risk_level"], "⚪"
+    
+    # Formal Receipt Document
+    with st.container(border=True):
+        # Receipt Header
+        st.markdown(
+            """
+            <div class="receipt-header">
+                <h2>📄 INSURED CLAIM RECEIPT</h2>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
-        st.metric("Risk Assessment", f"{risk_color} {ai_analysis['risk_level']}")
-
-    with col2:
-        sub_status = "Yes" if ai_analysis["subrogation_potential"] else "No"
-        st.metric("Subrogation Potential", sub_status)
-
-    with col3:
-        ale_status = "⚠️ Yes" if ai_analysis["ale_alert"] else "No"
-        st.metric("ALE Alert", ale_status)
-
-    if ai_analysis.get("ai_summary"):
-        st.info(f"**Analysis:** {ai_analysis['ai_summary']}")
-
-    if ai_analysis.get("risk_flags"):
-        with st.expander("🚩 Risk Flags Identified"):
-            for flag in ai_analysis["risk_flags"]:
-                st.markdown(f"- {flag}")
-
-    if ai_analysis.get("subrogation_potential"):
-        with st.expander("⚖️ Subrogation Details"):
-            st.markdown(ai_analysis["subrogation_potential"])
-
-    st.divider()
-
+        
+        # Claim ID Highlight
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown(
+                f'<div style="text-align: center;"><span class="claim-id">{claim_id}</span></div>',
+                unsafe_allow_html=True,
+            )
+            st.caption("Keep this number for your records")
+        
+        st.markdown("---")
+        
+        # Two-column receipt layout
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("##### 📋 Claim Details")
+            st.markdown(f"**Policy Number**  \n{data['policy_number']}")
+            st.markdown(f"**Date of Loss**  \n{data['loss_date'].strftime('%B %d, %Y')}")
+            st.markdown(f"**Type of Loss**  \n{data['loss_type']}")
+            st.markdown(f"**Submission Date**  \n{datetime.now().strftime('%B %d, %Y at %I:%M %p')}")
+        
+        with col2:
+            st.markdown("##### 👤 Assigned Adjuster")
+            if adjuster_info:
+                st.markdown(f"**Name**  \n{adjuster_info[0]}")
+                st.markdown(f"**Licensed In**  \n{adjuster_info[1]}")
+            st.markdown(f"**Your Email**  \n{data['email']}")
+            st.markdown(f"**Your Phone**  \n{data['phone']}")
+    
+    st.markdown("")
+    
     # Next Steps
-    st.markdown("#### 📋 What Happens Next")
-
-    st.markdown(
-        """
-        1. **Adjuster Contact:** You will be contacted by your assigned adjuster within **24-48 hours**.
+    with st.container(border=True):
+        st.markdown("##### 📋 What Happens Next")
         
-        2. **Prevent Further Damage:** Take reasonable steps to prevent additional damage to your property. 
-           This may include covering openings, shutting off water, or securing the premises.
+        col1, col2 = st.columns(2)
         
-        3. **Document Everything:** Continue to photograph any additional damage discovered and 
-           keep all damaged items until your adjuster has inspected them.
+        with col1:
+            st.markdown("""
+            **1. Adjuster Contact**  
+            You will be contacted within **24-48 hours**.
+            
+            **2. Prevent Further Damage**  
+            Take reasonable steps to prevent additional damage.
+            
+            **3. Document Everything**  
+            Continue photographing any new damage discovered.
+            """)
         
-        4. **Save All Receipts:** Keep receipts for any emergency repairs, temporary housing, 
-           meals, or other loss-related expenses.
-        
-        5. **Prepare for Inspection:** Gather any relevant documents such as receipts for damaged 
-           items, repair estimates, or police reports if applicable.
-        """
-    )
-
-    st.divider()
-
-    # Contact Information
-    st.markdown("#### 📞 Need Immediate Assistance?")
-    st.markdown(
-        """
-        - **Claims Hotline:** 1-800-555-CLAIM (24/7)
-        - **Emergency Services:** 1-800-555-HELP
-        - **Email:** claims@insurtech-carrier.com
-        """
-    )
+        with col2:
+            st.markdown("""
+            **4. Save All Receipts**  
+            Keep receipts for emergency repairs and expenses.
+            
+            **5. Prepare for Inspection**  
+            Gather relevant documents and repair estimates.
+            
+            **Need Help?** Call **1-800-555-CLAIM** (24/7)
+            """)
 
 
 def main():
     """Main application entry point."""
     st.set_page_config(
         page_title="FNOL Intelligence Suite",
-        page_icon="🏠",
+        page_icon="🏢",
         layout="wide",
         initial_sidebar_state="expanded",
     )
-
-    # Custom CSS for professional styling
-    st.markdown(
-        """
-        <style>
-        .stApp {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .stForm {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
+    
+    # Inject custom CSS
+    inject_custom_css()
+    
     # Render sidebar
     render_sidebar()
-
-    # Render main form
-    submitted, form_data = render_main_form()
-
-    # Handle form submission
-    if submitted:
-        # Validate form
-        is_valid, errors = validate_form(form_data)
-
-        if not is_valid:
-            for error in errors:
-                st.error(f"❌ {error}")
-            return
-
-        # Policy date validation
-        date_valid, date_message = validate_policy_date(form_data["loss_date"])
-        if not date_valid:
-            st.warning(date_message)
-
-        # Get adjuster info
-        adjuster_info = get_adjuster_info(form_data["state"])
-        if adjuster_info:
-            st.info(f"📋 Assigned Adjuster: **{adjuster_info[0]}** (Licensed in {adjuster_info[1]})")
-
-        # Generate claim ID
-        claim_id = generate_claim_id()
-
-        # AI Analysis
-        with st.spinner("🤖 AI Triage Engine analyzing claim..."):
-            ai_analysis = analyze_claim_with_ai(
-                description=form_data["description"],
-                loss_type=form_data["loss_type"],
-                uploaded_images=form_data["uploaded_files"],
-            )
-
-        # Render receipt
-        render_claim_receipt(claim_id, form_data, adjuster_info, ai_analysis)
+    
+    # Main content area
+    col_spacer1, col_main, col_spacer2 = st.columns([0.5, 11, 0.5])
+    
+    with col_main:
+        # Render intake form
+        submitted, form_data = render_intake_form()
+        
+        # Handle form submission
+        if submitted:
+            # Validate form
+            is_valid, errors = validate_form(form_data)
+            
+            if not is_valid:
+                for error in errors:
+                    st.error(f"❌ {error}")
+                return
+            
+            # Policy date validation
+            date_valid, date_message = validate_policy_date(form_data["loss_date"])
+            if not date_valid:
+                st.warning(date_message)
+            
+            # Get adjuster info
+            adjuster_info = get_adjuster_info(form_data["state"])
+            if adjuster_info:
+                st.info(f"📋 **Assigned Adjuster:** {adjuster_info[0]} (Licensed in {adjuster_info[1]})")
+            
+            # Generate claim ID
+            claim_id = generate_claim_id()
+            
+            # AI Analysis with status updates
+            with st.status("Analyzing Claim Data...", expanded=True) as status:
+                st.write("🔄 Initializing AI Triage Engine...")
+                ai_analysis = analyze_claim_with_ai(
+                    description=form_data["description"],
+                    loss_type=form_data["loss_type"],
+                    uploaded_images=form_data["uploaded_files"],
+                    status_container=status,
+                )
+            
+            # Render receipt
+            render_claim_receipt(claim_id, form_data, adjuster_info, ai_analysis)
 
 
 if __name__ == "__main__":
