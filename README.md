@@ -1,78 +1,99 @@
-# FNOL Intelligence Suite
+# FNOL Intelligence Suite  
+Structured First Notice of Loss Intake & Intelligent Triage Platform
 
-Enterprise-grade First Notice of Loss (FNOL) intake engine for modern Insurtech carriers. Built with Streamlit and powered by Google Gemini 2.0 Flash for intelligent claim triage.
+A workflow-driven First Notice of Loss (FNOL) intake system designed to standardize claim data capture, enforce validation logic, and prepare structured claim data for downstream automation and processing.
 
-## Features
+Built using Streamlit with AI-assisted triage powered by Google Gemini 2.0 Flash.
 
-### 🔐 Security & Compliance
-- PII Redaction indicators
-- Zero-Storage data retention policy
-- SOC2-Ready infrastructure status
+---
 
-### 📋 Intake Form
-- Policy Number validation
-- Date of Loss with policy period checking
-- Type of Loss selection (Fire, Water, Hail, Wind, Theft)
-- Detailed loss description
-- Contact information capture
+## Overview
+
+The FNOL Intelligence Suite demonstrates how structured intake architecture improves data quality, reduces claim cycle time, and enables intelligent routing and risk detection at first notice.
+
+The platform enforces required data validation, applies rule-based and AI-assisted triage logic, and prepares structured outputs ready for automation pipelines, claims systems, or analytics workflows.
+
+Designed for:
+
+- Insurtech carriers
+- Claims operations teams
+- Automation engineers
+- Product and workflow architects
+
+---
+
+## Core Capabilities
+
+### Structured Data Capture
+- Policy number validation
+- Date of loss validation with policy period checks
+- Guided loss classification (Fire, Water, Hail, Wind, Theft)
+- Detailed loss description capture
+- Contact information normalization
 - Photo and document upload support
 
-### 🧠 AI Triage Brain (Gemini 2.0 Flash)
-- **SIU Risk Scoring**: Identifies red flags like vague timelines, vacancy, and conflicting descriptions
-- **Subrogation Detection**: Recognizes potential 3rd party liability (neighbor's tree, manufacturer defect, contractor error)
-- **ALE/Total Loss Triage**: Triggers emergency housing alerts for unlivable conditions
+### Validation & Logic Enforcement
+- Required field enforcement
+- Logical dependency validation
+- Policy period verification
+- Structured error handling and feedback
 
-### 🚨 Smart Routing
-- State-based adjuster assignment (GA, FL, TX, AL)
-- Automatic emergency housing protocol activation
-- Professional claim receipt generation
+### AI-Assisted Triage (Gemini 2.0 Flash)
+- SIU risk flag detection (vague timelines, vacancy, conflicting narratives)
+- Subrogation opportunity detection (3rd-party liability indicators)
+- ALE / total loss early severity recognition
+- Intelligent claim classification support
 
-## Setup
+### Smart Routing & Workflow Readiness
+- State-based adjuster assignment logic
+- Emergency housing protocol activation
+- Structured claim receipt generation
+- Automation-ready structured output
 
-### Prerequisites
-- Python 3.10+
-- Google Gemini API key
+---
 
-### Installation
+## Business Objective
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd fnol-intelligence-suite
+Traditional FNOL processes often produce incomplete or inconsistent data, resulting in:
+
+- Manual follow-up calls
+- Increased claim handling time
+- Delays in assignment
+- Downstream rework
+
+This platform demonstrates how intelligent intake validation and early triage can:
+
+- Improve first-touch data accuracy
+- Reduce intake-related errors
+- Accelerate assignment decisions
+- Enable automation across the claims lifecycle
+
+---
+
+## Live Demo
+
+🔗 **Live App:** (Insert deployed URL here)
+
+---
+
+## Architecture
+
+```
+fnol_intelligence_suite.py     # Streamlit application entry point
+validation/                    # Data validation logic
+triage/                        # AI-assisted analysis logic
+routing/                       # Adjuster assignment and workflow logic
+utils/                         # Helper utilities
 ```
 
-2. Create and activate a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-4. Configure environment variables:
-```bash
-cp .env.example .env
-# Edit .env and add your GOOGLE_API_KEY
-```
-
-### Running the Application
-
-```bash
-streamlit run fnol_intelligence_suite.py
-```
-
-The application will be available at `http://localhost:8501`
+---
 
 ## Configuration
 
 ### Policy Period
-The default policy effective period is set to January 1, 2026 - December 31, 2026. Modify `POLICY_START_DATE` and `POLICY_END_DATE` in the configuration section to change this.
+Modify `POLICY_START_DATE` and `POLICY_END_DATE` to adjust effective period validation logic.
 
-### State-Adjuster Mapping
-Update `STATE_ADJUSTER_MAP` to configure adjuster assignments for different states:
+### State-to-Adjuster Mapping
 
 ```python
 STATE_ADJUSTER_MAP = {
@@ -83,6 +104,28 @@ STATE_ADJUSTER_MAP = {
 }
 ```
 
+---
+
+## Design Principles
+
+- Structured intake-first architecture
+- Validation-driven workflow control
+- AI as enhancement, not replacement
+- Automation-ready output formatting
+- Compliance-conscious design
+
+---
+
+## Future Enhancements
+
+- API integration with core claim systems
+- Fraud risk pre-scoring dashboard
+- Claim severity prediction module
+- Automated adjuster workload balancing
+- Structured audit logging
+
+---
+
 ## License
 
-Proprietary - All rights reserved.
+Proprietary – All rights reserved.
