@@ -72,7 +72,15 @@ This platform demonstrates how intelligent intake validation and early triage ca
 
 ## Live Demo
 
-🔗 **Live App:** (Insert deployed URL here)
+🚀 **[Try the Live Demo](https://elliott1985-fnol-intelligence-su-fnol-intelligence-suite-hp4xpe.streamlit.app)**
+
+---
+
+## Screenshots
+
+| Intake Form | Validation | Triage Results | Routing Output |
+|-------------|------------|----------------|----------------|
+| ![Intake Form](docs/images/intake-form.png) | ![Validation](docs/images/validation-error.png) | ![Triage](docs/images/triage-results.png) | ![Routing](docs/images/routing-output.png) |
 
 ---
 
