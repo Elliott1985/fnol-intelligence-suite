@@ -1,14 +1,17 @@
-# Netlify deploy bundle
+# Claims Intake — Demo
 
-This folder is the **complete site** to deploy to Netlify. Drag the entire
-folder into Netlify's "Deploy manually" area and you'll have three pages
-on one domain:
+🚀 **[Live Demo](https://claims-intake-demo.netlify.app)**
+
+A static HTML/JS frontend for the Claims Intake platform, connecting to a
+FastAPI backend hosted on Render.
 
 | URL | What it is | Who uses it |
 |---|---|---|
-| `/` | Intake form (policyholders, prospect demos) | Policyholders, prospects |
+| `/` | Intake form with login and multi-step claim flow | Policyholders, prospects |
 | `/dashboard.html` | Carrier portal — KPIs, workload, recent claims | Admin / manager |
 | `/claim.html?id=<uuid>` | Single-claim work surface | Adjusters |
+
+**Backend API:** https://claims-intake-api.onrender.com
 
 ## Files
 
