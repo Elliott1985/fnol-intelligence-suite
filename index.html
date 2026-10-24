@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Claims Intake — Demo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --iq-bg:#0f1117;--iq-surface:#181c25;--iq-surface2:#1e2330;
+  --iq-border:#2a2f3d;--iq-border2:#343a4d;--iq-text:#f0f1f5;
+  --iq-muted:#8b90a0;--iq-accent:#4a7efa;--iq-accent2:#3567d4;
+  --iq-green:#2db87a;--iq-amber:#e8a030;--iq-red:#e05050;
+}
+html,body{min-height:100vh;background:var(--iq-bg);color:var(--iq-text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.page{max-width:680px;margin:0 auto;padding:24px 20px 60px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 0 18px;border-bottom:0.5px solid var(--iq-border);margin-bottom:24px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{width:30px;height:30px;background:var(--iq-accent);border-radius:7px;display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.logo-name{font-size:16px;font-weight:500;color:var(--iq-text)}
+.logo-tag{font-size:11px;color:var(--iq-muted);padding:3px 8px;background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:20px}
+.mode-toggle{display:flex;gap:4px;background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:8px;padding:3px}
+.mode-btn{padding:5px 14px;font-size:12px;border-radius:6px;cursor:pointer;color:var(--iq-muted);border:none;background:transparent;transition:all .15s}
+.mode-btn.active{background:var(--iq-accent);color:#fff}
+.progress-wrap{margin-bottom:24px}
+.progress-info{display:flex;justify-content:space-between;margin-bottom:6px}
+.progress-label{font-size:12px;color:var(--iq-muted)}
+.progress-bar{height:3px;background:var(--iq-border);border-radius:2px}
+.progress-fill{height:3px;background:var(--iq-accent);border-radius:2px;transition:width .3s}
+.step{display:none}.step.active{display:block}
+.step-tag{font-size:11px;color:var(--iq-accent);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;font-weight:500}
+.step-title{font-size:20px;font-weight:500;color:var(--iq-text);margin-bottom:6px;letter-spacing:-.2px}
+.step-hint{font-size:13px;color:var(--iq-muted);margin-bottom:22px;line-height:1.6}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--iq-muted);margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;padding:9px 12px;font-size:14px;background:var(--iq-surface);border:0.5px solid var(--iq-border2);border-radius:8px;color:var(--iq-text);font-family:inherit}
+.field textarea{resize:vertical;min-height:80px}
+.field input::placeholder,.field textarea::placeholder{color:var(--iq-muted)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--iq-accent)}
+.field select option{background:var(--iq-surface)}
+.two-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.three-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:10px}
+.adjuster-only{display:block}.policyholder-only{display:none}
+.ph-mode .adjuster-only{display:none}.ph-mode .policyholder-only{display:block}
+.divider{height:0.5px;background:var(--iq-border);margin:18px 0}
+.sec-label{font-size:11px;color:var(--iq-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;font-weight:500}
+.tile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.tile{padding:14px 16px;background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:10px;cursor:pointer;transition:all .15s}
+.tile:hover{border-color:var(--iq-border2)}
+.tile.selected{background:rgba(74,126,250,.1);border-color:rgba(74,126,250,.5)}
+.tile-label{font-size:14px;font-weight:500;color:var(--iq-text);margin-bottom:3px}
+.tile-sub{font-size:12px;color:var(--iq-muted)}
+.radio-group,.check-group{display:flex;flex-direction:column;gap:8px}
+.radio-opt,.check-opt{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--iq-text);transition:all .15s}
+.radio-opt:hover,.check-opt:hover{border-color:var(--iq-border2)}
+.radio-opt.selected,.check-opt.selected{background:rgba(74,126,250,.1);border-color:rgba(74,126,250,.5)}
+.radio-opt input,.check-opt input{accent-color:var(--iq-accent);width:15px;height:15px;flex-shrink:0}
+.flag-box{border-radius:8px;padding:10px 14px;font-size:12px;margin-top:8px;margin-bottom:4px;display:none;line-height:1.5}
+.flag-box.show{display:block}
+.flag-critical{background:rgba(224,80,80,.12);border:0.5px solid rgba(224,80,80,.35);color:#f08080}
+.flag-warn{background:rgba(232,160,48,.12);border:0.5px solid rgba(232,160,48,.35);color:#d4a040}
+.flag-info-box{background:rgba(74,126,250,.1);border:0.5px solid rgba(74,126,250,.3);color:#7aabfa;border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:12px;line-height:1.5}
+.flag-label{font-size:10px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px;opacity:.8}
+.notice-card{background:var(--iq-surface2);border:0.5px solid var(--iq-border);border-radius:10px;padding:14px 16px;margin-top:8px;display:none}
+.notice-card.show{display:block}
+.notice-card-title{font-size:13px;font-weight:500;color:var(--iq-text);margin-bottom:6px}
+.notice-card-body{font-size:12px;color:var(--iq-muted);line-height:1.6}
+.expand-card{background:var(--iq-surface2);border:0.5px solid var(--iq-border);border-radius:10px;padding:14px 16px;margin-top:8px;display:none}
+.expand-card.show{display:block}
+.expand-card-title{font-size:12px;font-weight:500;color:var(--iq-text);margin-bottom:12px}
+.vendor-block{display:none}.vendor-block.show{display:block}
+.perm-box{background:rgba(232,160,48,.08);border:0.5px solid rgba(232,160,48,.25);border-radius:8px;padding:12px 14px;margin-top:10px}
+.perm-label{font-size:12px;font-weight:500;color:var(--iq-amber);margin-bottom:8px}
+.perm-opt{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:var(--iq-surface);border:0.5px solid rgba(232,160,48,.2);border-radius:7px;cursor:pointer;font-size:12px;color:var(--iq-text);margin-bottom:6px;transition:all .15s}
+.perm-opt:last-child{margin-bottom:0}
+.perm-opt.selected{background:rgba(74,126,250,.1);border-color:rgba(74,126,250,.5)}
+.perm-opt input{accent-color:var(--iq-accent);width:13px;height:13px;flex-shrink:0;margin-top:1px}
+.perm-opt-text{display:flex;flex-direction:column;gap:2px}
+.perm-opt-sub{font-size:11px;color:var(--iq-muted)}
+.upload-zone{background:var(--iq-surface2);border:0.5px dashed var(--iq-border2);border-radius:8px;padding:12px 14px;margin-top:8px}
+.upload-zone-title{font-size:12px;font-weight:500;color:var(--iq-text);margin-bottom:3px}
+.upload-zone-hint{font-size:11px;color:var(--iq-muted);margin-bottom:8px}
+.upload-zone input[type=file]{display:none}
+.upload-btn-sm{display:inline-block;padding:6px 12px;font-size:12px;background:var(--iq-surface);border:0.5px solid var(--iq-border2);border-radius:6px;color:var(--iq-text);cursor:pointer}
+.upload-files{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+.file-pill{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:6px;font-size:11px;color:var(--iq-text)}
+.file-pill button{background:none;border:none;color:var(--iq-red);cursor:pointer;font-size:13px}
+.upload-ok{font-size:11px;color:var(--iq-green);margin-top:4px;display:none}
+.upload-ok.show{display:block}
+.keywords-found{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.kw-pill{padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.kw-high{background:rgba(224,80,80,.15);color:var(--iq-red)}
+.kw-med{background:rgba(232,160,48,.15);color:var(--iq-amber)}
+.severity-bar-wrap{margin-top:8px}
+.severity-bar-label{display:flex;justify-content:space-between;font-size:11px;color:var(--iq-muted);margin-bottom:4px}
+.severity-bar-track{height:6px;background:var(--iq-border);border-radius:3px;overflow:hidden}
+.severity-bar-fill{height:6px;border-radius:3px;transition:width .6s}
+.missing-data-bar{background:rgba(224,80,80,.1);border:0.5px solid rgba(224,80,80,.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:none}
+.missing-data-bar.show{display:block}
+.missing-label{font-size:11px;font-weight:500;color:var(--iq-red);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase}
+.missing-items{display:flex;gap:8px;flex-wrap:wrap}
+.missing-pill{padding:3px 10px;background:rgba(224,80,80,.15);border-radius:20px;font-size:11px;color:var(--iq-red)}
+.nba-box{border-radius:10px;padding:16px 18px;margin-bottom:16px;display:none}
+.nba-box.show{display:block}
+.nba-urgent{background:rgba(224,80,80,.12);border:1.5px solid rgba(224,80,80,.4)}
+.nba-review{background:rgba(232,160,48,.1);border:1.5px solid rgba(232,160,48,.35)}
+.nba-fast{background:rgba(45,184,122,.1);border:1.5px solid rgba(45,184,122,.35)}
+.nba-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.nba-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nba-icon svg{width:16px;height:16px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nba-icon-urgent{background:rgba(224,80,80,.2)}.nba-icon-urgent svg{stroke:var(--iq-red)}
+.nba-icon-review{background:rgba(232,160,48,.2)}.nba-icon-review svg{stroke:var(--iq-amber)}
+.nba-icon-fast{background:rgba(45,184,122,.2)}.nba-icon-fast svg{stroke:var(--iq-green)}
+.nba-action{font-size:15px;font-weight:500;color:var(--iq-text)}
+.nba-reason{font-size:12px;color:var(--iq-muted);line-height:1.6}
+.sum-card{background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:10px;padding:16px;margin-bottom:12px}
+.sum-section-title{font-size:11px;color:var(--iq-accent);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;font-weight:500;padding-bottom:6px;border-bottom:0.5px solid var(--iq-border)}
+.sum-row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:0.5px solid var(--iq-border)}
+.sum-row:last-child{border-bottom:none}
+.sum-row span:first-child{color:var(--iq-muted)}
+.sum-row span:last-child{color:var(--iq-text);font-weight:500;text-align:right;max-width:60%}
+.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;margin-left:4px}
+.b-red{background:rgba(224,80,80,.15);color:var(--iq-red)}
+.b-amber{background:rgba(232,160,48,.15);color:var(--iq-amber)}
+.b-green{background:rgba(45,184,122,.15);color:var(--iq-green)}
+.b-blue{background:rgba(74,126,250,.15);color:var(--iq-accent)}
+.nav-row{display:flex;gap:10px;margin-top:24px}
+.btn-back{padding:10px 20px;background:transparent;color:var(--iq-muted);border:0.5px solid var(--iq-border);border-radius:8px;font-size:14px;cursor:pointer;transition:all .15s}
+.btn-back:hover{color:var(--iq-text);border-color:var(--iq-border2)}
+.btn-back:disabled{opacity:.3;cursor:not-allowed}
+.btn-next{flex:1;padding:10px 20px;background:var(--iq-accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:background .15s}
+.btn-next:hover{background:var(--iq-accent2)}
+.warn-text{font-size:12px;color:var(--iq-amber);margin-top:6px;display:none}
+.warn-text.show{display:block}
+.ai-thinking{display:none;align-items:center;gap:8px;font-size:12px;color:var(--iq-muted);margin-top:8px}
+.ai-thinking.show{display:flex}
+.ai-dot{width:6px;height:6px;border-radius:50%;background:var(--iq-accent);animation:pulse 1s ease-in-out infinite}
+.ai-dot:nth-child(2){animation-delay:.2s}.ai-dot:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+.ai-panel{background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:12px;padding:20px;margin-bottom:16px}
+.ai-panel-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:0.5px solid var(--iq-border)}
+.ai-avatar{width:36px;height:36px;background:rgba(74,126,250,.15);border:0.5px solid rgba(74,126,250,.3);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ai-avatar svg{width:18px;height:18px;fill:none;stroke:var(--iq-accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ai-panel-title{font-size:14px;font-weight:500;color:var(--iq-text)}
+.ai-panel-sub{font-size:12px;color:var(--iq-muted);margin-top:2px}
+.ai-loading{display:flex;flex-direction:column;gap:10px;padding:8px 0}
+.ai-load-row{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--iq-muted)}
+.ai-load-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ai-load-icon svg{width:11px;height:11px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ail-pending{background:var(--iq-surface2);border:0.5px solid var(--iq-border)}.ail-pending svg{stroke:var(--iq-muted)}
+.ail-running{background:rgba(74,126,250,.15);border:0.5px solid rgba(74,126,250,.3)}.ail-running svg{stroke:var(--iq-accent)}
+.ail-done{background:rgba(45,184,122,.15);border:0.5px solid rgba(45,184,122,.3)}.ail-done svg{stroke:var(--iq-green)}
+.ail-warn{background:rgba(224,80,80,.15);border:0.5px solid rgba(224,80,80,.3)}.ail-warn svg{stroke:var(--iq-red)}
+.weather-card{background:var(--iq-surface2);border:0.5px solid var(--iq-border);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.weather-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.weather-title{font-size:12px;font-weight:500;color:var(--iq-text)}
+.weather-status{font-size:11px;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.ws-confirmed{background:rgba(224,80,80,.15);color:var(--iq-red)}
+.ws-clear{background:rgba(45,184,122,.15);color:var(--iq-green)}
+.weather-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.weather-stat{background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:8px;padding:10px 12px}
+.weather-stat-label{font-size:10px;color:var(--iq-muted);margin-bottom:4px}
+.weather-stat-value{font-size:16px;font-weight:500;color:var(--iq-text)}
+.weather-stat-unit{font-size:11px;color:var(--iq-muted);font-weight:400}
+.weather-note{font-size:11px;color:var(--iq-muted);margin-top:10px;line-height:1.5;padding-top:10px;border-top:0.5px solid var(--iq-border)}
+.action-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.action-item{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--iq-surface2);border:0.5px solid var(--iq-border);border-radius:9px}
+.action-num{width:22px;height:22px;border-radius:50%;background:rgba(74,126,250,.15);border:0.5px solid rgba(74,126,250,.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--iq-accent);flex-shrink:0;margin-top:1px}
+.action-content{flex:1}
+.action-title{font-size:13px;font-weight:500;color:var(--iq-text);margin-bottom:3px}
+.action-desc{font-size:12px;color:var(--iq-muted);line-height:1.5}
+.action-priority{font-size:10px;padding:2px 7px;border-radius:20px;margin-left:6px}
+.ap-urgent{background:rgba(224,80,80,.15);color:var(--iq-red)}
+.ap-high{background:rgba(232,160,48,.15);color:var(--iq-amber)}
+.ap-std{background:rgba(74,126,250,.15);color:var(--iq-accent)}
+.doc-analysis{background:var(--iq-surface2);border:0.5px solid var(--iq-border);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.doc-analysis-title{font-size:12px;font-weight:500;color:var(--iq-text);margin-bottom:10px}
+.doc-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--iq-border);font-size:12px}
+.doc-item:last-child{border-bottom:none}
+.doc-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.doc-icon svg{width:13px;height:13px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.di-green{background:rgba(45,184,122,.15)}.di-green svg{stroke:var(--iq-green)}
+.di-amber{background:rgba(232,160,48,.15)}.di-amber svg{stroke:var(--iq-amber)}
+.doc-name{flex:1;color:var(--iq-text)}
+.doc-finding{font-size:11px;color:var(--iq-muted)}
+.settlement-box{background:rgba(45,184,122,.08);border:1px solid rgba(45,184,122,.3);border-radius:10px;padding:16px 18px;margin-bottom:12px}
+.settlement-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.settlement-icon{width:30px;height:30px;background:rgba(45,184,122,.2);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.settlement-icon svg{width:15px;height:15px;fill:none;stroke:var(--iq-green);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.settlement-title{font-size:14px;font-weight:500;color:var(--iq-text)}
+.settlement-body{font-size:12px;color:var(--iq-muted);line-height:1.6}
+.settlement-range{font-size:18px;font-weight:500;color:var(--iq-green);margin:8px 0 4px}
+.settlement-caveat{font-size:11px;color:var(--iq-muted)}
+.assign-btn{width:100%;padding:12px;background:var(--iq-accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;margin-top:8px;transition:background .15s}
+.assign-btn:hover{background:var(--iq-accent2)}
+@media(max-width:500px){.three-col{grid-template-columns:1fr 1fr}.weather-grid{grid-template-columns:1fr 1fr}.tile-grid{grid-template-columns:1fr}}
+.login-overlay{position:fixed;inset:0;background:rgba(15,17,23,.92);z-index:1000;display:flex;align-items:center;justify-content:center}
+.login-card{background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:12px;padding:28px;width:340px;max-width:90vw}
+.login-card h2{font-size:16px;font-weight:500;color:var(--iq-text);margin:0 0 4px}
+.login-card .login-sub{font-size:12px;color:var(--iq-muted);margin-bottom:18px}
+.login-card button{width:100%;padding:10px;background:var(--iq-accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;margin-top:8px}
+.login-card button:hover{background:var(--iq-accent2)}
+.login-msg{font-size:12px;min-height:18px;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="login-overlay" id="login-overlay" style="display:none">
+  <div class="login-card">
+    <h2>Sign in to Claims Intake</h2>
+    <div class="login-sub">Enter your credentials to access the demo</div>
+    <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="email@example.com"/></div>
+    <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <div class="login-msg" id="login-msg"></div>
+    <button onclick="doLogin()">Sign in</button>
+  </div>
+</div>
+<div class="page" id="form-wrap">
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><path d="M9 12h6M9 16h4"/></svg></div>
+      <span class="logo-name">Claims Intake</span>
+      <span class="logo-tag">Demo</span>
+    </div>
+    <div class="mode-toggle">
+      <button class="mode-btn active" onclick="setMode('adjuster')">Adjuster</button>
+      <button class="mode-btn" onclick="setMode('policyholder')">Policyholder</button>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-info">
+      <span class="progress-label" id="prog-label">Step 1 of 5 — Claim basics</span>
+      <span class="progress-label" id="prog-pct">20%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress" style="width:20%"></div></div>
+  </div>
+
+  <div id="steps">
+    <div class="step active" id="s1">
+      <div class="step-tag">Step 1 of 5</div>
+      <div class="step-title" id="s1-title">Claim basics</div>
+      <div class="step-hint" id="s1-hint">Start with contact information, property address, policy details, and type of loss.</div>
+      <div class="missing-data-bar" id="missing-bar"><div class="missing-label">Needs info — required fields missing</div><div class="missing-items" id="missing-items"></div></div>
+      <div class="sec-label" id="contact-sec">Contact information</div>
+      <div class="two-col">
+        <div class="field"><label id="fname-lbl">First name</label><input type="text" id="fname" placeholder="First name" oninput="checkMissing()"/></div>
+        <div class="field"><label id="lname-lbl">Last name</label><input type="text" id="lname" placeholder="Last name" oninput="checkMissing()"/></div>
+      </div>
+      <div class="two-col">
+        <div class="field"><label id="phone-lbl">Best contact number</label><input type="tel" id="contact-phone" placeholder="(000) 000-0000"/></div>
+        <div class="field"><label>Email <span style="color:var(--iq-muted);font-weight:400">(optional)</span></label><input type="email" id="contact-email" placeholder="email@example.com"/></div>
+      </div>
+      <div class="adjuster-only">
+        <div class="field"><label>Is the person reporting the named insured?</label>
+          <div class="radio-group">
+            <label class="radio-opt" onclick="selectRadio(this,'named-insured')"><input type="radio" name="named-insured" value="yes"> Yes — this is the named insured</label>
+            <label class="radio-opt" onclick="selectRadio(this,'named-insured')"><input type="radio" name="named-insured" value="no"> No — reporting on behalf of insured</label>
+          </div>
+        </div>
+        <div class="expand-card" id="card-reporter">
+          <div class="expand-card-title">Reporter details</div>
+          <div class="field"><label>Relationship to insured</label><input type="text" id="alt-rel" placeholder="e.g. Spouse, contractor, public adjuster"/></div>
+          <div class="two-col">
+            <div class="field"><label>Their name</label><input type="text" id="alt-name" placeholder="Full name"/></div>
+            <div class="field"><label>Their phone</label><input type="tel" id="alt-phone" placeholder="(000) 000-0000"/></div>
+          </div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="sec-label">Property address <span style="color:var(--iq-red)">*</span></div>
+      <div class="field"><label id="addr-street-lbl">Street address</label><input type="text" id="addr-street" placeholder="123 Main St" oninput="checkMissing()"/></div>
+      <div class="three-col">
+        <div class="field"><label>City</label><input type="text" id="addr-city" placeholder="City" oninput="checkMissing()"/></div>
+        <div class="field"><label>State</label>
+          <select id="addr-state" onchange="checkMissing()"><option value="">State</option><option>AL</option><option>AR</option><option>AZ</option><option>CA</option><option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option><option>HI</option><option>IA</option><option>ID</option><option>IL</option><option>IN</option><option>KS</option><option>KY</option><option>LA</option><option>MA</option><option>MD</option><option>ME</option><option>MI</option><option>MN</option><option>MO</option><option>MS</option><option>MT</option><option>NC</option><option>ND</option><option>NE</option><option>NH</option><option>NJ</option><option>NM</option><option>NV</option><option>NY</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>UT</option><option>VA</option><option>VT</option><option>WA</option><option>WI</option><option>WV</option><option>WY</option></select>
+        </div>
+        <div class="field"><label>ZIP code</label><input type="text" id="addr-zip" placeholder="00000" maxlength="5" oninput="checkMissing()"/></div>
+      </div>
+      <div class="divider"></div>
+      <div class="sec-label">Policy information</div>
+      <div class="two-col">
+        <div class="field"><label>Date of loss <span style="color:var(--iq-red)">*</span></label><input type="date" id="dol" oninput="checkMissing()"/></div>
+        <div class="field"><label>Policy number <span style="color:var(--iq-red)">*</span></label><input type="text" id="policy" placeholder="e.g. HO-123456" oninput="checkMissing()"/></div>
+      </div>
+      <div class="adjuster-only">
+        <div class="field"><label>Policy in force?</label>
+          <div class="radio-group">
+            <label class="radio-opt" onclick="selectRadio(this,'inforce')"><input type="radio" name="inforce" value="yes"> Yes, confirmed active</label>
+            <label class="radio-opt" onclick="selectRadio(this,'inforce')"><input type="radio" name="inforce" value="no"> No / unable to confirm</label>
+          </div>
+        </div>
+        <div class="flag-box flag-critical" id="flag-inforce"><div class="flag-label">Critical flag</div>Policy unconfirmed — do not proceed until coverage is verified with underwriting.</div>
+        <div class="field"><label>Prior claims in last 3 years?</label>
+          <div class="radio-group">
+            <label class="radio-opt" onclick="selectRadio(this,'priorclaims')"><input type="radio" name="priorclaims" value="no"> No prior claims</label>
+            <label class="radio-opt" onclick="selectRadio(this,'priorclaims')"><input type="radio" name="priorclaims" value="yes"> Yes — prior claim(s) on file</label>
+          </div>
+        </div>
+        <div class="flag-box flag-warn" id="flag-prior"><div class="flag-label">Review flag</div>Prior claims detected — review history for pre-existing damage before proceeding.</div>
+      </div>
+      <div class="policyholder-only"><div class="flag-info-box">Your policy details will be verified by your insurance company. Just provide your policy number so we can locate your account.</div></div>
+      <div class="divider"></div>
+      <div class="sec-label">Type of loss <span style="color:var(--iq-red)">*</span></div>
+      <div class="tile-grid">
+        <div class="tile" id="tile-wind" onclick="toggleLoss('wind')"><div class="tile-label">Wind / Hail</div><div class="tile-sub" id="wind-sub">Storm, roof, or exterior damage</div></div>
+        <div class="tile" id="tile-water" onclick="toggleLoss('water')"><div class="tile-label">Water / Plumbing</div><div class="tile-sub" id="water-sub">Leaks, pipes, or flooding</div></div>
+        <div class="tile" id="tile-fire" onclick="toggleLoss('fire')"><div class="tile-label">Fire / Smoke</div><div class="tile-sub" id="fire-sub">Structure or contents damage</div></div>
+        <div class="tile" id="tile-other" onclick="toggleLoss('other')"><div class="tile-label">Other</div><div class="tile-sub" id="other-sub">Theft, vandalism, or other</div></div>
+      </div>
+      <div class="warn-text" id="loss-warn">Please select at least one type of loss to continue.</div>
+      <div class="divider"></div>
+      <div class="sec-label">Loss description</div>
+      <div class="field"><label id="desc-lbl">Describe the damage in your own words</label><textarea id="loss-desc" placeholder="e.g. Roof is partially missing after last night's storm. Ceiling in master bedroom has collapsed and there is structural damage to the rear wall..." oninput="runSeverityScraper()"></textarea></div>
+      <div class="ai-thinking" id="ai-thinking"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div><span>Analyzing description for severity indicators...</span></div>
+      <div class="flag-box flag-critical" id="severity-high" style="display:none"><div class="flag-label">High severity detected</div><div>High-severity keywords identified — this claim may require immediate field response.</div><div class="keywords-found" id="keywords-found"></div><div class="severity-bar-wrap"><div class="severity-bar-label"><span>Severity score</span><span id="sev-score-lbl">0</span></div><div class="severity-bar-track"><div class="severity-bar-fill" id="sev-bar" style="width:0%;background:var(--iq-red)"></div></div></div></div>
+      <div class="flag-box flag-warn" id="severity-med" style="display:none"><div class="flag-label">Moderate severity</div><div>Moderate-severity indicators found — review damage scope carefully.</div><div class="keywords-found" id="keywords-found-med"></div><div class="severity-bar-wrap"><div class="severity-bar-label"><span>Severity score</span><span id="sev-score-med-lbl">0</span></div><div class="severity-bar-track"><div class="severity-bar-fill" id="sev-bar-med" style="width:0%;background:var(--iq-amber)"></div></div></div></div>
+    </div>
+
+    <div class="step" id="s2">
+      <div class="step-tag">Step 2 of 5</div>
+      <div class="step-title" id="s2-title">Property safety</div>
+      <div class="step-hint" id="s2-hint">This determines how urgently this claim needs to move.</div>
+      <div class="adjuster-only">
+        <div class="field"><label>Is the property currently habitable and safe to enter?</label>
+          <div class="radio-group">
+            <label class="radio-opt" onclick="selectRadio(this,'habitable')"><input type="radio" name="habitable" value="yes"> Yes — property is safe</label>
+            <label class="radio-opt" onclick="selectRadio(this,'habitable')"><input type="radio" name="habitable" value="no"> No — structural or safety concern</label>
+            <label class="radio-opt" onclick="selectRadio(this,'habitable')"><input type="radio" name="habitable" value="unknown"> Unknown at this time</label>
+          </div>
+        </div>
+        <div class="flag-box flag-critical" id="flag-hab-adj"><div class="flag-label">Critical flag</div>Emergency escalation required — assign field adjuster and initiate ALE review immediately.</div>
+      </div>
+      <div class="policyholder-only">
+        <div class="field"><label>Are you currently able to live in your home safely?</label>
+          <div class="radio-group">
+            <label class="radio-opt" onclick="selectRadio(this,'ph-hab')"><input type="radio" name="ph-hab" value="yes"> Yes — we are still living in the home</label>
+            <label class="radio-opt" onclick="selectRadio(this,'ph-hab')"><input type="radio" name="ph-hab" value="no"> No — we have had to leave</label>
+            <label class="radio-opt" onclick="selectRadio(this,'ph-hab')"><input type="radio" name="ph-hab" value="partial"> Partially — some areas are unusable</label>
+          </div>
+        </div>
+        <div class="expand-card" id="card-uninhabitable">
+          <div class="expand-card-title">Help us understand the situation</div>
+          <div class="field"><label>What is making it difficult or unsafe to stay?</label>
+            <div class="check-group">
+              <label class="check-opt" onclick="toggleCheck(this)"><input type="checkbox" value="roof-open"> Part of the roof is open or missing</label>
+              <label class="check-opt" onclick="toggleCheck(this)"><input type="checkbox" value="structural"> Walls, ceiling, or floors look cracked, sagging, or unstable</label>
+              <label class="check-opt" onclick="toggleCheck(this)"><input type="checkbox" value="electrical"> Electrical issues — sparks, exposed wires, or power is out</label>
+              <label class="check-opt" onclick="toggleCheck(this)"><input type="checkbox" value="gas"> Gas smell or possible gas leak</label>
+              <label class="check-opt" onclick="toggleCheck(this)"><input type="checkbox" value="water-standing"> Standing water inside the home</label>
+              <label class="check-opt" onclick="toggleCheck(this)"><input type="checkbox" value="no-utilities"> No heat, electricity, or running water</label>
+            </div>
+          </div>
+          <div class="field"><label>Where are you and your family staying right now?</label>
+            <div class="radio-group">
+              <label class="radio-opt" onclick="selectRadio(this,'staying')"><input type="radio" name="staying" value="home"> Still in the home</label>
+              <label class="radio-opt" onclick="selectRadio(this,'staying')"><input type="radio" name="staying" value="family"> Staying with family or friends</label>
+              <label class="radio-opt" onclick="selectRadio(this,'staying')"><input type="radio" name="staying" value="hotel"> In a hotel or temporary rental</label>
+            </div>
+          </div>
+        </div>
+        <div class="notice-card" id="notice-ale"><div class="notice-card-title">Important — please keep your receipts</div><div class="notice-card-body">If you have had to stay elsewhere or incur additional expenses because of the damage, please hold onto all receipts. Your adjuster will need to verify the extent of the damage and confirm coverage before any additional living expenses can be approved. No reimbursement commitment is being made at this time.</div></div>
+      </div>
+    </div>
+
+    <div class="step" id="s3">
+      <div class="step-tag">Step 3 of 5</div>
+      <div class="step-title" id="s3-title">Loss details</div>
+      <div class="step-hint" id="s3-hint">Questions tailored to your selected loss type.</div>
+      <div id="block-wind" style="display:none">
+        <div class="sec-label">Roof / exterior</div>
+        <div class="two-col">
+          <div class="field"><label id="roofyr-lbl">Year roof installed</label><input type="number" id="roofyear" placeholder="e.g. 2014" min="1950" max="2025" oninput="checkFlags()"/></div>
+          <div class="field"><label>Roofing material</label><select id="roofmat"><option value="">Select...</option><option>Asphalt shingle</option><option>Metal</option><option>Tile</option><option>Wood shake</option><option>Flat / TPO / EPDM</option><option>Other</option></select></div>
+        </div>
+        <div class="field"><label id="roofwork-lbl">Last roof work type</label>
+          <div class="radio-group">
+            <label class="radio-opt" onclick="selectRadio(this,'roofwork')"><input type="radio" name="roofwork" value="full"> Full replacement</label>
+            <label class="radio-opt" onclick="selectRadio(this,'roofwork')"><input type="radio" name="roofwork" value="partial"> Partial repair</label>
+            <label class="radio-opt" onclick="selectRadio(this,'roofwork')"><input type="radio" name="roofwork" value="unknown"> Not sure</label>
+          </div>
+        </div>
+        <div class="flag-box flag-warn" id="flag-roofage"><div class="flag-label">Review flag</div>Roof age exceeds 15 years — verify ACV vs. RCV coverage and check for cosmetic damage exclusions in this state.</div>
+        <div class="adjuster-only">
+          <div class="field"><label>Permits pulled for prior roof work?</label>
+            <div class="radio-group">
+              <label class="radio-opt" onclick="selectRadio(this,'permit')"><input type="radio" name="permit" value="yes"> Yes</label>
+              <label class="radio-opt" onclick="selectRadio(this,'permit')"><input type="radio" name="permit" value="no"> No</label>
+              <label class="radio-opt" onclick="selectRadio(this,'permit')"><input type="radio" name="permit" value="unknown"> Unknown</label>
+            </div>
+          </div>
+        </div>
+        <div class="divider"></div>
+      </div>
+      <div id="block-water" style="display:none">
+        <div class="sec-label">Water / plumbing</div>
+        <div class="field"><label>Cause of water damage</label>
+          <div class="tile-grid">
+            <div class="tile" id="wtile-burst" onclick="toggleWCause('burst')"><div class="tile-label">Burst / frozen pipe</div></div>
+            <div class="tile" id="wtile-sewer" onclick="toggleWCause('sewer')"><div class="tile-label">Sewer / drain backup</div></div>
+            <div class="tile" id="wtile-wroof" onclick="toggleWCause('wroof')"><div class="tile-label">Roof leak</div></div>
+            <div class="tile" id="wtile-wother" onclick="toggleWCause('wother')"><div class="tile-label">Appliance / other</div></div>
+          </div>
+        </div>
+        <div class="flag-box flag-critical adjuster-only" id="flag-sewer"><div class="flag-label">Critical flag</div>Sewer backup selected — verify whether policy includes a sewer backup endorsement. Frequently excluded on standard HO policies.</div>
+        <div class="field"><label id="wstopped-lbl">Has the water source been located and stopped?</label>
+          <div class="radio-group">
+            <label class="radio-opt" onclick="selectRadio(this,'wstopped')"><input type="radio" name="wstopped" value="yes"> Yes — source has been stopped</label>
+            <label class="radio-opt" onclick="selectRadio(this,'wstopped')"><input type="radio" name="wstopped" value="no"> No — water is still active</label>
+            <label class="radio-opt" onclick="selectRadio(this,'wstopped')"><input type="radio" name="wstopped" value="unknown"> Not sure</label>
+          </div>
+        </div>
+        <div class="flag-box flag-critical" id="flag-active-water"><div class="flag-label">Critical flag</div>Active water source — emergency mitigation referral required immediately.</div>
+        <div class="divider"></div>
+      </div>
+      <div class="sec-label" id="rooms-sec">Affected areas</div>
+      <div class="check-group" id="rooms-group">
+        <label class="check-opt" onclick="toggleCheck(this)"><input type="checkbox" value="kitchen"> Kitchen</label>
+        <label class="check-opt" onclick="toggleCheck(this)"><input type="checkbox" value="bathroom"> Bathroom(s)</label>
+        <label class="check-opt" onclick="toggleCheck(this)"><input type="checkbox" value="bedroom"> Bedroom(s)</label>
+        <label class="check-opt" onclick="toggleCheck(this)"><input type="checkbox" value="living"> Living / common areas</label>
+        <label class="check-opt" onclick="toggleCheck(this)"><input type="checkbox" value="attic"> Attic</label>
+        <label class="check-opt" onclick="toggleCheck(this)"><input type="checkbox" value="basement"> Basement / crawl space</label>
+        <label class="check-opt" onclick="toggleCheck(this)"><input type="checkbox" value="ceiling"> Ceilings or walls</label>
+        <label class="check-opt" onclick="toggleCheck(this)"><input type="checkbox" value="exterior"> Exterior only</label>
+      </div>
+      <div class="field" style="margin-top:12px"><label id="contents-lbl">Are any personal contents damaged?</label>
+        <div class="radio-group">
+          <label class="radio-opt" onclick="selectRadio(this,'contents')"><input type="radio" name="contents" value="yes"> Yes — contents affected</label>
+          <label class="radio-opt" onclick="selectRadio(this,'contents')"><input type="radio" name="contents" value="no"> No contents damage</label>
+        </div>
+      </div>
+      <div class="flag-box flag-warn adjuster-only" id="flag-contents"><div class="flag-label">Review flag</div>Contents damage reported — initiate Coverage C documentation and request personal property inventory.</div>
+    </div>
+
+    <div class="step" id="s4">
+      <div class="step-tag">Step 4 of 5</div>
+      <div class="step-title" id="s4-title">Contractors &amp; documentation</div>
+      <div class="step-hint" id="s4-hint">Tell us who is involved and upload any supporting documents.</div>
+      <div class="vendor-block" id="block-roofer">
+        <div class="sec-label">Roofing contractor</div>
+        <div class="field"><label>Has a roofer or contractor examined the property?</label>
+          <div class="radio-group">
+            <label class="radio-opt" onclick="selectRadio(this,'roofer')"><input type="radio" name="roofer" value="yes"> Yes</label>
+            <label class="radio-opt" onclick="selectRadio(this,'roofer')"><input type="radio" name="roofer" value="no"> No</label>
+          </div>
+        </div>
+        <div class="expand-card" id="card-roofer">
+          <div class="expand-card-title">Roofer / contractor details</div>
+          <div class="field"><label>Company name</label><input type="text" id="r-name" placeholder="Company name"/></div>
+          <div class="two-col">
+            <div class="field"><label>Point of contact</label><input type="text" id="r-contact" placeholder="Full name"/></div>
+            <div class="field"><label>Phone</label><input type="tel" id="r-phone" placeholder="(000) 000-0000"/></div>
+          </div>
+          <div class="perm-box">
+            <div class="perm-label" id="perm-roofer-lbl">Permission to contact this contractor directly</div>
+            <label class="perm-opt" onclick="selectPerm(this,'perm-roofer')"><input type="radio" name="perm-roofer" value="yes"><div class="perm-opt-text"><span>Yes — you may contact them directly</span><span class="perm-opt-sub">The carrier or adjuster may reach out to verify findings or request documentation.</span></div></label>
+            <label class="perm-opt" onclick="selectPerm(this,'perm-roofer')"><input type="radio" name="perm-roofer" value="no"><div class="perm-opt-text"><span>No — contact me first</span><span class="perm-opt-sub">All communication must go through the insured first.</span></div></label>
+          </div>
+          <div class="upload-zone" style="margin-top:10px">
+            <div class="upload-zone-title">Upload estimate or inspection report</div>
+            <div class="upload-zone-hint">Upload any estimate, invoice, or inspection report.</div>
+            <label class="upload-btn-sm" for="file-roofer">Choose file</label>
+            <input type="file" id="file-roofer" accept=".pdf,.jpg,.jpeg,.png" onchange="handleUpload(this,'roofer-files','roofer-ok')">
+            <div class="upload-files" id="roofer-files"></div>
+            <div class="upload-ok" id="roofer-ok">Uploaded.</div>
+          </div>
+        </div>
+        <div class="divider"></div>
+      </div>
+      <div class="vendor-block" id="block-plumber">
+        <div class="sec-label">Plumber</div>
+        <div class="field"><label>Has a plumber been contacted or work performed?</label>
+          <div class="radio-group">
+            <label class="radio-opt" onclick="selectRadio(this,'plumber')"><input type="radio" name="plumber" value="yes"> Yes</label>
+            <label class="radio-opt" onclick="selectRadio(this,'plumber')"><input type="radio" name="plumber" value="no"> No</label>
+          </div>
+        </div>
+        <div class="expand-card" id="card-plumber">
+          <div class="expand-card-title">Plumber details</div>
+          <div class="field"><label>Company name</label><input type="text" id="p-name" placeholder="Company name"/></div>
+          <div class="two-col">
+            <div class="field"><label>Point of contact</label><input type="text" id="p-contact" placeholder="Full name"/></div>
+            <div class="field"><label>Phone</label><input type="tel" id="p-phone" placeholder="(000) 000-0000"/></div>
+          </div>
+          <div class="perm-box">
+            <div class="perm-label">Permission to contact this plumber directly</div>
+            <label class="perm-opt" onclick="selectPerm(this,'perm-plumber')"><input type="radio" name="perm-plumber" value="yes"><div class="perm-opt-text"><span>Yes — you may contact them directly</span></div></label>
+            <label class="perm-opt" onclick="selectPerm(this,'perm-plumber')"><input type="radio" name="perm-plumber" value="no"><div class="perm-opt-text"><span>No — contact me first</span></div></label>
+          </div>
+          <div class="upload-zone" style="margin-top:10px">
+            <div class="upload-zone-title">Upload invoice or service report</div>
+            <div class="upload-zone-hint">Upload any invoice, estimate, or service report.</div>
+            <label class="upload-btn-sm" for="file-plumber">Choose file</label>
+            <input type="file" id="file-plumber" accept=".pdf,.jpg,.jpeg,.png" onchange="handleUpload(this,'plumber-files','plumber-ok')">
+            <div class="upload-files" id="plumber-files"></div>
+            <div class="upload-ok" id="plumber-ok">Uploaded.</div>
+          </div>
+        </div>
+        <div class="divider"></div>
+      </div>
+      <div class="vendor-block" id="block-mitigation">
+        <div class="sec-label">Water mitigation</div>
+        <div class="field"><label>Has a water mitigation company been contacted?</label>
+          <div class="radio-group">
+            <label class="radio-opt" onclick="selectRadio(this,'mitigation')"><input type="radio" name="mitigation" value="yes"> Yes</label>
+            <label class="radio-opt" onclick="selectRadio(this,'mitigation')"><input type="radio" name="mitigation" value="no"> No</label>
+          </div>
+        </div>
+        <div class="expand-card" id="card-mitigation">
+          <div class="expand-card-title">Mitigation company details</div>
+          <div class="field"><label>Company name</label><input type="text" id="m-name" placeholder="Company name"/></div>
+          <div class="two-col">
+            <div class="field"><label>Point of contact</label><input type="text" id="m-contact" placeholder="Full name"/></div>
+            <div class="field"><label>Phone</label><input type="tel" id="m-phone" placeholder="(000) 000-0000"/></div>
+          </div>
+          <div class="perm-box">
+            <div class="perm-label">Permission to contact this company directly</div>
+            <label class="perm-opt" onclick="selectPerm(this,'perm-mitigation')"><input type="radio" name="perm-mitigation" value="yes"><div class="perm-opt-text"><span>Yes — you may contact them directly</span></div></label>
+            <label class="perm-opt" onclick="selectPerm(this,'perm-mitigation')"><input type="radio" name="perm-mitigation" value="no"><div class="perm-opt-text"><span>No — contact me first</span></div></label>
+          </div>
+          <div class="upload-zone" style="margin-top:10px">
+            <div class="upload-zone-title">Upload mitigation documentation</div>
+            <div class="upload-zone-hint">Upload any estimate, invoice, or moisture documentation.</div>
+            <label class="upload-btn-sm" for="file-mitig">Choose file</label>
+            <input type="file" id="file-mitig" accept=".pdf,.jpg,.jpeg,.png" onchange="handleUpload(this,'mitig-files','mitig-ok')">
+            <div class="upload-files" id="mitig-files"></div>
+            <div class="upload-ok" id="mitig-ok">Uploaded.</div>
+          </div>
+        </div>
+        <div class="divider"></div>
+      </div>
+      <div class="sec-label">Photos</div>
+      <div class="field"><label>Have photos of the damage been taken?</label>
+        <div class="radio-group">
+          <label class="radio-opt" onclick="selectRadio(this,'photos')"><input type="radio" name="photos" value="yes"> Yes</label>
+          <label class="radio-opt" onclick="selectRadio(this,'photos')"><input type="radio" name="photos" value="no"> Not yet</label>
+        </div>
+      </div>
+      <div class="upload-zone" id="upload-photos" style="display:none">
+        <div class="upload-zone-title">Upload damage photos</div>
+        <div class="upload-zone-hint">Upload photos of all affected areas.</div>
+        <label class="upload-btn-sm" for="file-photos">Choose files</label>
+        <input type="file" id="file-photos" accept=".jpg,.jpeg,.png" multiple onchange="handleUpload(this,'photos-files','photos-ok')">
+        <div class="upload-files" id="photos-files"></div>
+        <div class="upload-ok" id="photos-ok">Photos uploaded.</div>
+      </div>
+      <div class="notice-card" id="notice-no-photos" style="display:none"><div class="notice-card-title">Please take photos before any cleanup begins</div><div class="notice-card-body">Photos are an important part of your claim. Before any cleanup or repairs begin, please photograph all damaged areas — where the damage came from, affected walls or flooring, and any standing water.</div></div>
+    </div>
+
+    <div class="step" id="s5">
+      <div class="step-tag">Step 5 of 5</div>
+      <div class="step-title">Intake summary</div>
+      <div class="step-hint">Review all flags and the severity assessment, then assign the claim to activate the AI assistant.</div>
+      <div id="summary-output"></div>
+      <button class="assign-btn" onclick="assignClaim()">Assign claim &amp; activate AI assistant ↗</button>
+    </div>
+
+    <div class="step" id="s6">
+      <div class="step-tag" style="color:var(--iq-green)">Claim assigned</div>
+      <div class="step-title">AI assistant briefing</div>
+      <div class="step-hint" id="ai-brief-hint">Analyzing claim file, verifying weather data, and generating your action plan...</div>
+      <div class="ai-panel" id="ai-loading-panel">
+        <div class="ai-panel-header">
+          <div class="ai-avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
+          <div><div class="ai-panel-title">AI Claims Assistant</div><div class="ai-panel-sub" id="ai-status-text">Initializing analysis...</div></div>
+        </div>
+        <div class="ai-loading" id="ai-steps">
+          <div class="ai-load-row" id="step-intake"><div class="ai-load-icon ail-running"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Reading intake file and claim data</div>
+          <div class="ai-load-row" id="step-weather"><div class="ai-load-icon ail-pending"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></div>Pulling weather data for date of loss and location</div>
+          <div class="ai-load-row" id="step-flags"><div class="ai-load-icon ail-pending"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></div>Evaluating coverage flags and severity score</div>
+          <div class="ai-load-row" id="step-docs"><div class="ai-load-icon ail-pending"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></div>Analyzing uploaded documents</div>
+          <div class="ai-load-row" id="step-plan"><div class="ai-load-icon ail-pending"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></div>Generating personalized action plan</div>
+        </div>
+      </div>
+      <div id="ai-results" style="display:none">
+        <div class="ai-panel">
+          <div class="ai-panel-header">
+            <div class="ai-avatar"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z"/><path d="M12 6v6l4 2"/></svg></div>
+            <div><div class="ai-panel-title">AI Claims Assistant — Briefing ready</div><div class="ai-panel-sub" id="ai-claim-id">Claim file analyzed · Action plan generated</div></div>
+          </div>
+          <div id="weather-section"></div>
+          <div id="nba-section"></div>
+          <div id="actions-section"></div>
+          <div id="doc-section"></div>
+          <div id="settlement-section"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-row" id="nav-row">
+    <button class="btn-back" id="btn-back" onclick="navigate(-1)" disabled>Back</button>
+    <button class="btn-next" id="btn-next" onclick="navigate(1)">Next</button>
+  </div>
+</div>
+
+<script>
+const API_BASE='https://claims-intake-backend.onrender.com';
+const TOKEN_KEY='claims_intake_token';
+const authState={accessToken:null,claimId:null,claimResponse:null};
+
+// Auto-login from saved token
+(function(){
+  const saved=localStorage.getItem(TOKEN_KEY);
+  if(saved){
+    authState.accessToken=saved;
+    document.getElementById('login-overlay').style.display='none';
+  }else{
+    document.getElementById('login-overlay').style.display='flex';
+  }
+})();
+
+async function apiFetch(path,opts={}){
+  const headers={'Content-Type':'application/json',...(opts.headers||{})};
+  if(authState.accessToken)headers['Authorization']='Bearer '+authState.accessToken;
+  const resp=await fetch(API_BASE+path,{...opts,headers});
+  const ct=resp.headers.get('content-type')||'';
+  const body=ct.includes('application/json')?await resp.json():await resp.text();
+  if(!resp.ok){const d=(body&&body.detail)||body;throw new Error(typeof d==='string'?d:JSON.stringify(d));}
+  return body;
+}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-password').value;
+  const msg=document.getElementById('login-msg');
+  msg.textContent='Signing in...';msg.style.color='var(--iq-muted)';
+  try{
+    const r=await apiFetch('/auth/login',{method:'POST',body:JSON.stringify({email:email,password:pw})});
+    authState.accessToken=r.access_token;
+    localStorage.setItem(TOKEN_KEY,r.access_token);
+    document.getElementById('login-overlay').style.display='none';
+  }catch(e){
+    msg.textContent='Sign-in failed: '+e.message;msg.style.color='var(--iq-red)';
+  }
+}
+
+let currentStep=1,mode='adjuster';
+const lossTypes=new Set(),wCauses=new Set();
+const uploads={roofer:[],plumber:[],mitig:[],photos:[]};
+let severityTimer=null;
+const HIGH_KW=['structural','total loss','collapse','collapsed','injury','injured','uninhabitable','emergency','destroyed','catastrophic','foundation','electrical fire','gas leak'];
+const MED_KW=['missing roof','roof damage','water damage','flooding','burst pipe','sewer','significant','extensive','multiple rooms','interior damage','ceiling damage'];
+
+function setMode(m){
+  mode=m;
+  document.getElementById('form-wrap').classList.toggle('ph-mode',m==='policyholder');
+  document.querySelectorAll('.mode-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&m==='adjuster')||(i===1&&m==='policyholder')));
+  const ph=m==='policyholder';
+  document.getElementById('s1-title').textContent=ph?'Your claim':'Claim basics';
+  document.getElementById('s2-title').textContent=ph?'Is your home safe?':'Property safety';
+  document.getElementById('s3-title').textContent=ph?'About the damage':'Loss details';
+  document.getElementById('s4-title').textContent=ph?'Who is involved?':'Contractors & documentation';
+  document.getElementById('s1-hint').textContent=ph?'Let\'s start with your contact details and what happened.':'Start with contact information, property address, policy details, and type of loss.';
+  document.getElementById('s2-hint').textContent=ph?'We want to make sure you and your family are safe.':'Determines escalation priority for this claim.';
+  document.getElementById('s3-hint').textContent=ph?'Tell us how much of your home has been affected.':'Document the full scope of damage.';
+  document.getElementById('s4-hint').textContent=ph?'Let us know who you have already been in contact with.':'Record all vendors involved and upload supporting documents.';
+  document.getElementById('contact-sec').textContent=ph?'Your contact information':'Contact information';
+  document.getElementById('fname-lbl').textContent=ph?'Your first name':'First name';
+  document.getElementById('lname-lbl').textContent=ph?'Your last name':'Last name';
+  document.getElementById('phone-lbl').textContent=ph?'Best phone number to reach you':'Best contact number';
+  document.getElementById('addr-street-lbl').textContent=ph?'Your street address':'Street address';
+  document.getElementById('desc-lbl').textContent=ph?'Describe what happened in your own words':'Describe the damage in your own words';
+  document.getElementById('wind-sub').textContent=ph?'Storm, wind, or hail damage':'Storm, roof, or exterior damage';
+  document.getElementById('water-sub').textContent=ph?'Water coming in or a pipe problem':'Leaks, pipes, or flooding';
+  document.getElementById('roofyr-lbl').textContent=ph?'What year was your roof last replaced?':'Year roof installed';
+  document.getElementById('roofwork-lbl').textContent=ph?'Was the last work on your roof a full replacement or a repair?':'Last roof work type';
+  document.getElementById('wstopped-lbl').textContent=ph?'Has the water been stopped or turned off?':'Has the water source been located and stopped?';
+  document.getElementById('contents-lbl').textContent=ph?'Are any of your belongings damaged?':'Are any personal contents damaged?';
+  document.getElementById('rooms-sec').textContent=ph?'Which parts of your home are affected?':'Affected areas';
+  document.getElementById('perm-roofer-lbl').textContent=ph?'Can we contact this contractor directly?':'Permission to contact this contractor directly';
+  checkFlags();
+}
+
+function t(id){return document.getElementById(id)?.value||'';}
+function v(n){const el=document.querySelector('input[name="'+n+'"]:checked');return el?el.value:null;}
+
+function toggleLoss(type){
+  const tile=document.getElementById('tile-'+type);
+  if(lossTypes.has(type)){lossTypes.delete(type);tile.classList.remove('selected');}
+  else{lossTypes.add(type);tile.classList.add('selected');}
+  document.getElementById('loss-warn').classList.toggle('show',lossTypes.size===0);
+  document.getElementById('block-wind').style.display=lossTypes.has('wind')?'block':'none';
+  document.getElementById('block-water').style.display=lossTypes.has('water')?'block':'none';
+  document.getElementById('block-roofer').classList.toggle('show',lossTypes.has('wind'));
+  document.getElementById('block-plumber').classList.toggle('show',lossTypes.has('water')&&!lossTypes.has('wind'));
+  document.getElementById('block-mitigation').classList.toggle('show',lossTypes.has('water'));
+}
+
+function toggleWCause(t2){
+  const ids={burst:'wtile-burst',sewer:'wtile-sewer',wroof:'wtile-wroof',wother:'wtile-wother'};
+  const tile=document.getElementById(ids[t2]);
+  if(wCauses.has(t2)){wCauses.delete(t2);tile&&tile.classList.remove('selected');}
+  else{wCauses.add(t2);tile&&tile.classList.add('selected');}
+  document.getElementById('flag-sewer').classList.toggle('show',wCauses.has('sewer')&&mode==='adjuster');
+}
+
+function selectRadio(el,name){
+  document.querySelectorAll('.radio-opt').forEach(o=>{if(o.querySelector('input[name="'+name+'"]'))o.classList.remove('selected');});
+  el.classList.add('selected');checkFlags();
+}
+function selectPerm(el,name){
+  document.querySelectorAll('.perm-opt').forEach(o=>{if(o.querySelector('input[name="'+name+'"]'))o.classList.remove('selected');});
+  el.classList.add('selected');
+}
+function toggleCheck(el){el.classList.toggle('selected');}
+
+function checkMissing(){
+  const missing=[];
+  if(!t('dol'))missing.push('Date of loss');
+  if(!t('policy'))missing.push('Policy number');
+  if(!t('addr-street')||!t('addr-city')||!t('addr-state')||!t('addr-zip'))missing.push('Property address');
+  if(lossTypes.size===0)missing.push('Type of loss');
+  document.getElementById('missing-items').innerHTML=missing.map(m=>'<span class="missing-pill">'+m+'</span>').join('');
+  document.getElementById('missing-bar').classList.toggle('show',missing.length>0);
+  return missing;
+}
+
+function runSeverityScraper(){
+  clearTimeout(severityTimer);
+  const desc=document.getElementById('loss-desc').value.toLowerCase();
+  if(desc.length<10){document.getElementById('severity-high').style.display='none';document.getElementById('severity-med').style.display='none';document.getElementById('ai-thinking').classList.remove('show');return;}
+  document.getElementById('ai-thinking').classList.add('show');
+  document.getElementById('severity-high').style.display='none';
+  document.getElementById('severity-med').style.display='none';
+  severityTimer=setTimeout(()=>{
+    document.getElementById('ai-thinking').classList.remove('show');
+    const d=document.getElementById('loss-desc').value.toLowerCase();
+    const hf=HIGH_KW.filter(k=>d.includes(k));
+    const mf=MED_KW.filter(k=>d.includes(k));
+    if(hf.length>0){
+      const s=Math.min(100,60+hf.length*12+mf.length*4);
+      document.getElementById('severity-high').style.display='block';
+      document.getElementById('keywords-found').innerHTML=hf.map(k=>'<span class="kw-pill kw-high">'+k+'</span>').join('')+mf.map(k=>'<span class="kw-pill kw-med">'+k+'</span>').join('');
+      document.getElementById('sev-bar').style.width=s+'%';
+      document.getElementById('sev-score-lbl').textContent=s+'/100';
+    } else if(mf.length>0){
+      const s=Math.min(59,30+mf.length*8);
+      document.getElementById('severity-med').style.display='block';
+      document.getElementById('keywords-found-med').innerHTML=mf.map(k=>'<span class="kw-pill kw-med">'+k+'</span>').join('');
+      document.getElementById('sev-bar-med').style.width=s+'%';
+      document.getElementById('sev-score-med-lbl').textContent=s+'/100';
+    }
+  },800);
+}
+
+function checkFlags(){
+  const ph=mode==='policyholder';
+  document.getElementById('flag-inforce').classList.toggle('show',v('inforce')==='no');
+  document.getElementById('flag-prior').classList.toggle('show',v('priorclaims')==='yes');
+  document.getElementById('flag-hab-adj').classList.toggle('show',v('habitable')&&v('habitable')!=='yes');
+  const phHab=v('ph-hab');
+  document.getElementById('card-uninhabitable').classList.toggle('show',phHab==='no'||phHab==='partial');
+  document.getElementById('notice-ale').classList.toggle('show',phHab==='no'||phHab==='partial');
+  const yr=parseInt(t('roofyear'));
+  document.getElementById('flag-roofage').classList.toggle('show',yr&&(new Date().getFullYear()-yr)>15);
+  document.getElementById('flag-active-water').classList.toggle('show',v('wstopped')==='no'||v('wstopped')==='unknown');
+  document.getElementById('card-reporter').classList.toggle('show',v('named-insured')==='no');
+  document.getElementById('card-roofer').classList.toggle('show',v('roofer')==='yes');
+  document.getElementById('card-plumber').classList.toggle('show',v('plumber')==='yes');
+  document.getElementById('card-mitigation').classList.toggle('show',v('mitigation')==='yes');
+  document.getElementById('upload-photos').style.display=v('photos')==='yes'?'block':'none';
+  document.getElementById('notice-no-photos').style.display=v('photos')==='no'?'block':'none';
+  document.getElementById('flag-contents').classList.toggle('show',v('contents')==='yes'&&!ph);
+  checkMissing();
+}
+
+function handleUpload(input,listId,okId){
+  const key=listId.replace('-files','');
+  if(!uploads[key])uploads[key]=[];
+  Array.from(input.files).forEach(f=>uploads[key].push(f.name));
+  const list=document.getElementById(listId);list.innerHTML='';
+  uploads[key].forEach((name,i)=>{const p=document.createElement('div');p.className='file-pill';p.innerHTML='<span>'+name+'</span><button onclick="removeFile(\''+key+'\','+i+',\''+listId+'\',\''+okId+'\')">×</button>';list.appendChild(p);});
+  const ok=document.getElementById(okId);
+  if(ok){ok.classList.add('show');setTimeout(()=>ok.classList.remove('show'),3000);}
+  input.value='';
+}
+function removeFile(key,idx,listId,okId){
+  uploads[key].splice(idx,1);
+  const list=document.getElementById(listId);list.innerHTML='';
+  uploads[key].forEach((name,i)=>{const p=document.createElement('div');p.className='file-pill';p.innerHTML='<span>'+name+'</span><button onclick="removeFile(\''+key+'\','+i+',\''+listId+'\',\''+okId+'\')">×</button>';list.appendChild(p);});
+}
+
+const stepLabels=['Claim basics','Property safety','Loss details','Contractors & documentation','Intake summary'];
+const stepLabelsPH=['Your claim','Is your home safe?','About the damage','Who is involved?','Your summary'];
+
+function navigate(dir){
+  if(dir===1&&currentStep===1){const m=checkMissing();if(m.length>0)return;}
+  document.getElementById('s'+currentStep).classList.remove('active');
+  currentStep=Math.max(1,Math.min(5,currentStep+dir));
+  document.getElementById('s'+currentStep).classList.add('active');
+  const pct=Math.round(currentStep/5*100);
+  document.getElementById('progress').style.width=pct+'%';
+  document.getElementById('prog-pct').textContent=pct+'%';
+  const ph=mode==='policyholder';
+  document.getElementById('prog-label').textContent='Step '+currentStep+' of 5 — '+(ph?stepLabelsPH:stepLabels)[currentStep-1];
+  document.getElementById('btn-back').disabled=currentStep===1;
+  document.getElementById('btn-next').style.display=currentStep===5?'none':'';
+  window.scrollTo(0,0);
+  if(currentStep===5)buildSummary();
+}
+
+function buildSummary(){
+  const fname=t('fname'),lname=t('lname');
+  const fullName=(fname||lname)?(fname+' '+lname).trim():'—';
+  const addr=[t('addr-street'),t('addr-city'),t('addr-state'),t('addr-zip')].filter(Boolean).join(', ')||'—';
+  const rooms=[...document.querySelectorAll('#rooms-group .check-opt.selected input')].map(i=>i.value).join(', ')||'None';
+  const desc=document.getElementById('loss-desc').value;
+  const hf=HIGH_KW.filter(k=>desc.toLowerCase().includes(k));
+  const mf=MED_KW.filter(k=>desc.toLowerCase().includes(k));
+  const sev=hf.length>0?Math.min(100,60+hf.length*12+mf.length*4):mf.length>0?Math.min(59,30+mf.length*8):0;
+  const missing=checkMissing();
+  const allDocs=[];
+  Object.keys(uploads).forEach(k=>{if(uploads[k]&&uploads[k].length)allDocs.push(uploads[k].length+' '+k);});
+  const flags=[];
+  if(v('inforce')==='no')flags.push('<span class="badge b-red">Policy unconfirmed</span>');
+  if(v('priorclaims')==='yes')flags.push('<span class="badge b-amber">Prior claims</span>');
+  if(wCauses.has('sewer'))flags.push('<span class="badge b-red">Sewer — verify endorsement</span>');
+  if(v('wstopped')==='no')flags.push('<span class="badge b-red">Active water source</span>');
+  if(v('habitable')&&v('habitable')!=='yes')flags.push('<span class="badge b-red">Habitability concern</span>');
+  if(parseInt(t('roofyear'))&&(new Date().getFullYear()-parseInt(t('roofyear')))>15)flags.push('<span class="badge b-amber">Roof age 15+</span>');
+  if(v('contents')==='yes')flags.push('<span class="badge b-amber">Contents damage</span>');
+  if(missing.length>0)flags.push('<span class="badge b-red">Needs info</span>');
+  if(allDocs.length)flags.push('<span class="badge b-green">Docs uploaded</span>');
+
+  let nc='nba-fast',na='Route to fast-track desk',nr='No critical flags. Claim is complete and ready for standard processing.',ni='<polyline points="20 6 9 17 4 12"/>',nic='nba-icon-fast';
+  if(missing.length>0){nc='nba-urgent';nic='nba-icon-urgent';ni='<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';na='Return for missing information';nr='Required fields incomplete: '+missing.join(', ')+'.';}
+  else if(hf.length>0||v('inforce')==='no'||(v('habitable')&&v('habitable')!=='yes')||v('wstopped')==='no'){nc='nba-urgent';nic='nba-icon-urgent';ni='<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>';na='Assign to field adjuster immediately';const r=[];if(hf.length>0)r.push('high-severity keywords detected');if(v('inforce')==='no')r.push('policy unconfirmed');if(v('habitable')&&v('habitable')!=='yes')r.push('habitability concern');if(v('wstopped')==='no')r.push('active water source');nr='Critical factors: '+r.join(', ')+'.';}
+  else if(mf.length>0||v('priorclaims')==='yes'||parseInt(t('roofyear'))&&(new Date().getFullYear()-parseInt(t('roofyear')))>15){nc='nba-review';nic='nba-icon-review';ni='<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>';na='Assign to senior adjuster for review';const r=[];if(mf.length>0)r.push('moderate severity');if(v('priorclaims')==='yes')r.push('prior claims');if(parseInt(t('roofyear'))&&(new Date().getFullYear()-parseInt(t('roofyear')))>15)r.push('roof age flag');nr='Review factors: '+r.join(', ')+'.';}
+
+  let html='<div class="nba-box '+nc+' show"><div class="nba-top"><div class="nba-icon '+nic+'"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+ni+'</svg></div><div class="nba-action">'+na+'</div></div><div class="nba-reason">'+nr+'</div></div>';
+  if(missing.length>0)html+='<div class="missing-data-bar show" style="margin-bottom:12px"><div class="missing-label">Needs info</div><div class="missing-items">'+missing.map(m=>'<span class="missing-pill">'+m+'</span>').join('')+'</div></div>';
+  html+='<div class="sum-card"><div class="sum-section-title">Contact &amp; property</div><div class="sum-row"><span>Name</span><span>'+fullName+'</span></div><div class="sum-row"><span>Phone</span><span>'+(t('contact-phone')||'—')+'</span></div><div class="sum-row"><span>Property address</span><span>'+addr+'</span></div></div>';
+  html+='<div class="sum-card"><div class="sum-section-title">Claim basics</div><div class="sum-row"><span>Date of loss</span><span>'+(t('dol')||'<span class="badge b-red">Missing</span>')+'</span></div><div class="sum-row"><span>Policy number</span><span>'+(t('policy')||'<span class="badge b-red">Missing</span>')+'</span></div><div class="sum-row"><span>Loss type(s)</span><span>'+([...lossTypes].join(', ')||'<span class="badge b-red">Missing</span>')+'</span></div><div class="sum-row"><span>Policy in force</span><span>'+(v('inforce')||'—')+'</span></div></div>';
+  if(sev>0)html+='<div class="sum-card"><div class="sum-section-title">Severity assessment</div><div class="sum-row"><span>Score</span><span>'+sev+'/100 '+(sev>=60?'<span class="badge b-red">High</span>':'<span class="badge b-amber">Moderate</span>')+'</span></div>'+(hf.length>0?'<div class="sum-row"><span>Keywords</span><span>'+hf.slice(0,3).join(', ')+'</span></div>':'')+'</div>';
+  html+='<div class="sum-card"><div class="sum-section-title">Damage</div><div class="sum-row"><span>Affected areas</span><span>'+rooms+'</span></div><div class="sum-row"><span>Contents</span><span>'+(v('contents')||'—')+'</span></div>'+(lossTypes.has('wind')?'<div class="sum-row"><span>Roof year / material</span><span>'+(t('roofyear')||'—')+' / '+(t('roofmat')||'—')+'</span></div>':'')+'</div>';
+  if(flags.length)html+='<div class="sum-card"><div class="sum-section-title">Flags</div><div class="sum-row"><span>Active</span><span>'+flags.join(' ')+'</span></div></div>';
+  if(allDocs.length)html+='<div class="sum-card"><div class="sum-section-title">Documents</div><div class="sum-row"><span>Uploaded</span><span>'+allDocs.join(', ')+'</span></div></div>';
+  document.getElementById('summary-output').innerHTML=html;
+}
+
+async function assignClaim(){
+  document.getElementById('s5').classList.remove('active');
+  document.getElementById('s6').classList.add('active');
+  document.getElementById('progress').style.width='100%';
+  document.getElementById('prog-pct').textContent='Complete';
+  document.getElementById('prog-label').textContent='Claim assigned — AI assistant active';
+  document.getElementById('nav-row').style.display='none';
+  window.scrollTo(0,0);
+
+  // Build payload from form and submit to backend
+  const lossTypeMap={wind:'roof_exterior',water:'water_plumbing',fire:'fire_smoke',other:'other'};
+  const rooms=[...document.querySelectorAll('#rooms-group .check-opt.selected input')].map(i=>i.value);
+  const desc=document.getElementById('loss-desc').value;
+  const habAdj=v('habitable'),habPh=v('ph-hab');
+  const habRaw=habAdj||habPh||null;
+  const habVal=habRaw==='unknown'?null:habRaw;
+  const emailVal=t('contact-email')||null;
+
+  const payload={
+    mode:mode,
+    first_name:t('fname'),last_name:t('lname'),
+    phone:t('contact-phone')||null,
+    email:emailVal&&emailVal.includes('@')?emailVal:null,
+    reporter_is_insured:v('named-insured')!=='no',
+    reporter_name:t('alt-name')||null,
+    reporter_relationship:t('alt-rel')||null,
+    reporter_phone:t('alt-phone')||null,
+    addr_street:t('addr-street'),addr_city:t('addr-city'),
+    addr_state:t('addr-state'),addr_zip:t('addr-zip'),
+    date_of_loss:t('dol'),
+    policy_number:t('policy')||null,
+    policy_in_force:v('inforce')==='yes'?true:v('inforce')==='no'?false:null,
+    prior_claims:v('priorclaims')==='yes'?true:v('priorclaims')==='no'?false:null,
+    loss_types:[...lossTypes].map(lt=>lossTypeMap[lt]||lt),
+    loss_description:desc||null,
+    habitable:habVal,
+    uninhabitable_reasons:[...document.querySelectorAll('#card-uninhabitable .check-opt.selected input')].map(i=>i.value),
+    where_staying:v('staying')||null,
+    roof_year:parseInt(t('roofyear'))||null,
+    roof_material:t('roofmat')||null,
+    roof_work_type:v('roofwork')==='full'?'full_replacement':v('roofwork')==='partial'?'partial_repair':null,
+    permits_pulled:v('permit')==='yes'?true:v('permit')==='no'?false:null,
+    water_source_stopped:v('wstopped')==='yes'?true:v('wstopped')==='no'?false:null,
+    water_active:v('wstopped')==='no',
+    water_cause:wCauses.has('burst')?'burst_frozen_pipe':wCauses.has('sewer')?'sewer_backup':wCauses.has('wroof')?'roof_leak':wCauses.has('wother')?'appliance':null,
+    rooms_affected:rooms,
+    contents_damaged:v('contents')==='yes',
+    structural_damage:desc?/structural|collapse|foundation/i.test(desc):false,
+    photos_uploaded:v('photos')==='yes'
+  };
+
+  if(v('roofer')==='yes'&&t('r-name'))payload.roofer={company:t('r-name'),point_of_contact:t('r-contact')||null,phone:t('r-phone')||null,permission_to_contact:v('perm-roofer')==='yes'};
+  if(v('plumber')==='yes'&&t('p-name'))payload.plumber={company:t('p-name'),point_of_contact:t('p-contact')||null,phone:t('p-phone')||null,permission_to_contact:v('perm-plumber')==='yes'};
+  if(v('mitigation')==='yes'&&t('m-name'))payload.mitigation={company:t('m-name'),point_of_contact:t('m-contact')||null,phone:t('m-phone')||null,permission_to_contact:v('perm-mitigation')==='yes'};
+
+  try{
+    const r=await apiFetch('/claims',{method:'POST',body:JSON.stringify(payload)});
+    authState.claimId=r.id;
+    authState.claimResponse=r;
+  }catch(e){
+    console.warn('Claim submission failed, using simulated mode:',e.message);
+  }
+
+  runAIAssistant();
+}
+
+async function runAIAssistant(){
+  const allUploaded=uploads.roofer.length||uploads.plumber.length||uploads.mitig.length||uploads.photos.length;
+  const doneIcon='<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  const warnIcon='<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>';
+  function upd(id,label,cls){
+    const row=document.getElementById(id),icon=row.querySelector('.ai-load-icon');
+    icon.className='ai-load-icon '+cls;
+    icon.innerHTML=cls==='ail-done'?doneIcon:cls==='ail-warn'?warnIcon:'';
+    row.childNodes[1].textContent=label;
+    document.getElementById('ai-status-text').textContent=label;
+  }
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
+  // Step 1: Intake
+  await wait(600);
+  upd('step-intake','Intake file read — claim data loaded','ail-done');
+
+  // Step 2: Weather
+  upd('step-weather','Pulling weather data for date of loss and location','ail-running');
+  let weatherData=null;
+  if(authState.claimId){
+    try{weatherData=await apiFetch('/claims/'+authState.claimId+'/weather',{method:'POST'});upd('step-weather','Weather data retrieved for date of loss and location','ail-done');}
+    catch(e){console.warn('Weather API:',e.message);await wait(800);upd('step-weather','Weather data retrieved (simulated)','ail-done');}
+  }else{await wait(800);upd('step-weather','Weather data retrieved (simulated)','ail-done');}
+  showWeather(weatherData);
+
+  // Step 3: Flags
+  await wait(400);
+  upd('step-flags','Coverage flags and severity evaluated','ail-done');
+
+  // Step 4: Docs
+  await wait(300);
+  upd('step-docs',allUploaded?'Documents analyzed — findings ready':'No documents uploaded — noted for follow-up',allUploaded?'ail-done':'ail-warn');
+
+  // Step 5: AI Brief
+  upd('step-plan','Generating personalized action plan...','ail-running');
+  let briefData=null;
+  if(authState.claimId){
+    try{briefData=await apiFetch('/claims/'+authState.claimId+'/assistant/brief',{method:'POST'});upd('step-plan','Action plan generated','ail-done');}
+    catch(e){console.warn('AI brief:',e.message);await wait(600);upd('step-plan','Action plan generated (local analysis)','ail-done');}
+  }else{await wait(600);upd('step-plan','Action plan generated (local analysis)','ail-done');}
+  showResults(briefData);
+}
+
+function showWeather(weatherData){
+  const dol=t('dol')||'the reported date';
+  const city=t('addr-city');const st2=t('addr-state');const zip=t('addr-zip');
+  const loc=[city,st2,zip].filter(Boolean).join(', ')||'the reported location';
+  let hasEvent,windMph,hailIn,summary,thirdLabel,thirdVal,thirdUnit;
+  if(weatherData){
+    hasEvent=weatherData.storm_detected;
+    windMph=weatherData.max_wind_mph!=null?Math.round(weatherData.max_wind_mph):0;
+    hailIn=weatherData.max_hail_size_in!=null?weatherData.max_hail_size_in:0;
+    summary=weatherData.summary;
+    thirdLabel='Precipitation';thirdVal=weatherData.precipitation_in!=null?weatherData.precipitation_in:'—';thirdUnit=' in';
+  }else{
+    const hasWind=lossTypes.has('wind');
+    hasEvent=hasWind;windMph=hasWind?67:12;hailIn=hasWind?1.5:0;
+    thirdLabel='Storm duration';thirdVal=hasWind?'2.4':'0';thirdUnit=' hrs';
+    summary=hasWind?'A qualifying severe weather event was confirmed at this location on the reported date of loss. Peak winds of 67 mph and 1.5" hail recorded. Consistent with reported damage. Attach this report to the claim file.':'No qualifying severe weather event was confirmed at this location on the reported date. Further investigation may be required to verify the cause and date of loss.';
+  }
+  document.getElementById('weather-section').innerHTML='<div class="weather-card"><div class="weather-header"><div class="weather-title">Weather verification — '+dol+' · '+loc+'</div><div class="weather-status '+(hasEvent?'ws-confirmed':'ws-clear')+'">'+(hasEvent?'Storm confirmed':'No qualifying event found')+'</div></div><div class="weather-grid"><div class="weather-stat"><div class="weather-stat-label">Peak wind speed</div><div class="weather-stat-value">'+windMph+' <span class="weather-stat-unit">mph</span></div></div><div class="weather-stat"><div class="weather-stat-label">Hail size</div><div class="weather-stat-value">'+hailIn+'<span class="weather-stat-unit"> in</span></div></div><div class="weather-stat"><div class="weather-stat-label">'+thirdLabel+'</div><div class="weather-stat-value">'+thirdVal+'<span class="weather-stat-unit">'+thirdUnit+'</span></div></div></div><div class="weather-note">'+summary+'</div></div>';
+}
+
+function showResults(briefData){
+  document.getElementById('ai-loading-panel').style.display='none';
+  document.getElementById('ai-results').style.display='block';
+  document.getElementById('ai-brief-hint').textContent='Analysis complete. Weather verified, flags reviewed, and action plan ready.';
+
+  // ---- REAL API BRIEF ----
+  if(briefData&&briefData.action_plan&&briefData.action_plan.length>0){
+    const cr=authState.claimResponse;
+    let nc='nba-fast',na='Route to fast-track desk',nr='No critical flags. Claim is complete and ready for standard processing.',ni='<polyline points="20 6 9 17 4 12"/>',nic='nba-icon-fast';
+    if(cr){
+      nr=cr.nba_reason;
+      const cmd=cr.nba_command;
+      if(cmd==='assign_field_adjuster'||cmd==='escalate_emergency'){nc='nba-urgent';nic='nba-icon-urgent';ni='<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>';na=cmd==='escalate_emergency'?'Emergency escalation required':'Assign to field adjuster immediately';}
+      else if(cmd==='assign_senior_adjuster'){nc='nba-review';nic='nba-icon-review';ni='<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>';na='Assign to senior adjuster for review';}
+      else if(cmd==='return_for_info'){nc='nba-urgent';nic='nba-icon-urgent';ni='<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';na='Return for missing information';}
+    }
+    document.getElementById('nba-section').innerHTML='<div class="nba-box '+nc+' show" style="margin-bottom:16px"><div class="nba-top"><div class="nba-icon '+nic+'"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+ni+'</svg></div><div class="nba-action">'+na+'</div></div><div class="nba-reason">'+nr+'</div></div>';
+    function guessPri(txt){if(/immediate|emergency|urgent|critical|uninhabitable/i.test(txt))return'ap-urgent';if(/verify|review|request|obtain|inspect|document|contact|pull|order/i.test(txt))return'ap-high';return'ap-std';}
+    const acts=briefData.action_plan;
+    document.getElementById('actions-section').innerHTML='<div class="sec-label" style="margin-bottom:10px">Recommended action plan</div><div class="action-list">'+acts.map((a,i)=>{const p=guessPri(a);return'<div class="action-item"><div class="action-num">'+(i+1)+'</div><div class="action-content"><div class="action-desc" style="font-size:13px;color:var(--iq-text);line-height:1.6">'+a+'</div></div></div>';}).join('')+'</div>';
+    if(briefData.document_observations&&briefData.document_observations.length)document.getElementById('doc-section').innerHTML='<div class="doc-analysis"><div class="doc-analysis-title">Document analysis</div>'+briefData.document_observations.map(d=>'<div class="doc-item"><div class="doc-icon di-amber"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div style="flex:1"><div class="doc-name" style="font-size:12px">'+d+'</div></div></div>').join('')+'</div>';
+    if(briefData.settlement_eligibility)document.getElementById('settlement-section').innerHTML='<div class="settlement-box"><div class="settlement-header"><div class="settlement-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="settlement-title">Settlement assessment</div></div><div class="settlement-body" style="font-size:13px;line-height:1.6">'+briefData.settlement_eligibility+'</div></div>';
+    document.getElementById('ai-claim-id').textContent='Claim analyzed · '+acts.length+' action items · Weather verified';
+    return;
+  }
+
+  // ---- SIMULATED BRIEF (fallback) ----
+  const desc=document.getElementById('loss-desc').value;
+  const hf=HIGH_KW.filter(k=>desc.toLowerCase().includes(k));
+  const mf=MED_KW.filter(k=>desc.toLowerCase().includes(k));
+  const sev=hf.length>0?Math.min(100,60+hf.length*12+mf.length*4):mf.length>0?Math.min(59,30+mf.length*8):0;
+  const roofAge=parseInt(t('roofyear'))?(new Date().getFullYear()-parseInt(t('roofyear'))):0;
+  const hasRooferDocs=uploads.roofer.length>0;
+  const hasPhotos=uploads.photos.length>0;
+  const isHigh=sev>=60;
+  const fname=t('fname')||'the insured';
+  const addr=[t('addr-street'),t('addr-city'),t('addr-state')].filter(Boolean).join(', ')||'the reported address';
+
+  let nc='nba-fast',na='Route to fast-track desk',nr='No critical flags. Weather verified. Claim is complete and eligible for standard processing.',ni='<polyline points="20 6 9 17 4 12"/>',nic='nba-icon-fast';
+  if(isHigh||(v('habitable')&&v('habitable')!=='yes')){nc='nba-urgent';nic='nba-icon-urgent';ni='<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>';na='Assign to field adjuster immediately';const r=[];if(isHigh)r.push('high-severity description');if(v('habitable')&&v('habitable')!=='yes')r.push('habitability concern — ALE review required');nr='Weather event confirmed at '+addr+'. '+r.join('; ')+'. Field inspection required before repairs begin.';}
+  else if(roofAge>15||v('priorclaims')==='yes'||mf.length>0){nc='nba-review';nic='nba-icon-review';ni='<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>';na='Assign to senior adjuster for review';const r=[];if(roofAge>15)r.push('roof age '+roofAge+' years');if(v('priorclaims')==='yes')r.push('prior claims');if(mf.length>0)r.push('moderate severity indicators');nr='Weather confirmed. Review items: '+r.join('; ')+'.';}
+
+  document.getElementById('nba-section').innerHTML='<div class="nba-box '+nc+' show" style="margin-bottom:16px"><div class="nba-top"><div class="nba-icon '+nic+'"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+ni+'</svg></div><div class="nba-action">'+na+'</div></div><div class="nba-reason">'+nr+'</div></div>';
+
+  const actions=[];
+  actions.push({title:'Attach weather report to claim file',desc:'Storm confirmed at '+addr+' on '+t('dol')+'. 67 mph winds, 1.5" hail recorded. Attach the weather verification report and note in the claim log.',p:'ap-urgent'});
+  if(v('inforce')==='no')actions.push({title:'Verify policy status with underwriting',desc:'Policy could not be confirmed in force at time of loss. Do not discuss coverage or make any commitments until underwriting confirms active status.',p:'ap-urgent'});
+  if(lossTypes.has('wind'))actions.push({title:'Order independent roof inspection',desc:'Schedule a field inspector to examine the roof for wind and hail damage. '+(roofAge>15?'Roof is '+roofAge+' years old — document condition for ACV depreciation. Verify cosmetic damage exclusion applicability in this state.':'Document damage scope before any repairs begin.'),p:roofAge>15?'ap-high':'ap-std'});
+  if(lossTypes.has('wind')&&!hasRooferDocs)actions.push({title:'Request contractor estimate',desc:'No contractor documentation was uploaded at intake. Contact '+fname+' to request a written estimate from their roofing contractor before approving any scope of work.',p:'ap-high'});
+  if(lossTypes.has('wind')&&hasRooferDocs)actions.push({title:'Review uploaded contractor estimate',desc:'A contractor estimate was submitted at intake. Compare line items against the confirmed storm damage scope and verify against current regional pricing.',p:'ap-high'});
+  if(!hasPhotos)actions.push({title:'Obtain pre-repair photos immediately',desc:'No photos were uploaded at intake. Contact '+fname+' and emphasize that all damaged areas must be photographed before any cleanup or repairs begin.',p:'ap-high'});
+  if(hasPhotos)actions.push({title:'Review uploaded photos against damage description',desc:'Photos were submitted at intake. Review for consistency with the reported cause of loss. Note any signs of pre-existing damage or wear.',p:'ap-std'});
+  if(v('priorclaims')==='yes')actions.push({title:'Pull prior claim history',desc:'Prior claims were reported on this property within the last 3 years. Request full claim history and review for overlapping damage or pre-existing conditions.',p:'ap-high'});
+  if(lossTypes.has('water'))actions.push({title:'Confirm water source has been stopped',desc:'Water/plumbing loss reported. Verify with '+fname+' that the source has been located and shut off. If not, refer to emergency mitigation immediately.',p:'ap-urgent'});
+  if(v('contents')==='yes')actions.push({title:'Send personal property inventory form',desc:'Contents damage was reported at intake. Send '+fname+' a personal property inventory form and request completion within 10 days. Review Coverage C limits.',p:'ap-std'});
+  if(v('roofer')==='yes'&&v('perm-roofer')==='yes'&&t('r-name'))actions.push({title:'Contact contractor directly — permission granted',desc:'Permission to contact '+t('r-name')+' was documented at intake. Reach out to verify scope and request additional documentation.',p:'ap-std'});
+  actions.push({title:'Review declarations page for applicable coverages',desc:'Confirm Coverage A limits, deductible, ACV vs. RCV election, and any endorsements or exclusions before discussing scope or settlement with the insured.',p:'ap-std'});
+
+  document.getElementById('actions-section').innerHTML='<div class="sec-label" style="margin-bottom:10px">Recommended action plan</div><div class="action-list">'+actions.map((a,i)=>'<div class="action-item"><div class="action-num">'+(i+1)+'</div><div class="action-content"><div class="action-title">'+a.title+'<span class="action-priority '+a.p+'">'+(a.p==='ap-urgent'?'Immediate':a.p==='ap-high'?'High':'Standard')+'</span></div><div class="action-desc">'+a.desc+'</div></div></div>').join('')+'</div>';
+
+  const allDocs=[];
+  if(uploads.roofer.length)uploads.roofer.forEach(f=>allDocs.push({name:f,type:'Contractor estimate',cls:'di-green',finding:'Review against confirmed damage scope',icon:'<polyline points="20 6 9 17 4 12"/>'}));
+  if(uploads.photos.length)uploads.photos.forEach(f=>allDocs.push({name:f,type:'Damage photo',cls:'di-green',finding:'Compare against loss description and field findings',icon:'<polyline points="20 6 9 17 4 12"/>'}));
+  if(uploads.mitig.length)uploads.mitig.forEach(f=>allDocs.push({name:f,type:'Mitigation document',cls:'di-amber',finding:'Review scope and costs against standard protocols',icon:'<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>'}));
+  if(uploads.plumber.length)uploads.plumber.forEach(f=>allDocs.push({name:f,type:'Plumber report',cls:'di-green',finding:'Review to confirm source of loss and repair scope',icon:'<polyline points="20 6 9 17 4 12"/>'}));
+  if(allDocs.length)document.getElementById('doc-section').innerHTML='<div class="doc-analysis"><div class="doc-analysis-title">Document analysis</div>'+allDocs.map(d=>'<div class="doc-item"><div class="doc-icon '+d.cls+'"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+d.icon+'</svg></div><div style="flex:1"><div class="doc-name">'+d.name+'</div><div class="doc-finding">'+d.type+' — '+d.finding+'</div></div></div>').join('')+'</div>';
+
+  const canSettle=!isHigh&&hasRooferDocs&&hasPhotos&&v('inforce')!=='no'&&v('priorclaims')!=='yes'&&roofAge<=20;
+  if(canSettle)document.getElementById('settlement-section').innerHTML='<div class="settlement-box"><div class="settlement-header"><div class="settlement-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="settlement-title">Desk settlement eligible</div></div><div class="settlement-body">Based on the intake data, weather confirmation, contractor documentation on file, and absence of critical flags, this claim appears eligible for desk settlement without a full field inspection.</div><div class="settlement-range">$4,200 – $7,800</div><div class="settlement-caveat">Estimated range based on reported damage scope and current regional material and labor rates. Final amount subject to declarations page review, deductible application, and ACV/RCV determination. Adjuster approval required before any offer is communicated to the insured.</div></div>';
+
+  document.getElementById('ai-claim-id').textContent='Claim analyzed · '+actions.length+' action items · Weather verified';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Claim — Claims Intake</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --iq-bg:#0f1117;--iq-surface:#181c25;--iq-surface2:#1e2330;
+  --iq-border:#2a2f3d;--iq-border2:#343a4d;--iq-text:#f0f1f5;
+  --iq-muted:#8b90a0;--iq-accent:#4a7efa;--iq-accent2:#3567d4;
+  --iq-green:#2db87a;--iq-amber:#e8a030;--iq-red:#e05050;
+}
+html,body{min-height:100vh;background:var(--iq-bg);color:var(--iq-text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px}
+a{color:var(--iq-accent);text-decoration:none;cursor:pointer}
+a:hover{text-decoration:underline}
+button{font-family:inherit;cursor:pointer}
+
+/* topbar */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:0.5px solid var(--iq-border);background:var(--iq-bg);position:sticky;top:0;z-index:5}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{width:30px;height:30px;background:var(--iq-accent);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:12px}
+.logo-name{font-size:15px;font-weight:500}
+.logo-tag{font-size:10px;color:var(--iq-muted);padding:3px 8px;background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:20px}
+.crumb{font-size:12px;color:var(--iq-muted)}
+.crumb a{color:var(--iq-muted)}
+.crumb a:hover{color:var(--iq-text)}
+
+/* layout */
+.page{max-width:1120px;margin:0 auto;padding:24px 22px 64px}
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px}
+.head h1{font-size:22px;font-weight:500;letter-spacing:-.2px;margin-bottom:4px}
+.head .sub{font-size:12px;color:var(--iq-muted)}
+.head .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+
+.chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;letter-spacing:.03em}
+.chip-red{background:rgba(224,80,80,.15);color:var(--iq-red)}
+.chip-amber{background:rgba(232,160,48,.15);color:var(--iq-amber)}
+.chip-green{background:rgba(45,184,122,.15);color:var(--iq-green)}
+.chip-blue{background:rgba(74,126,250,.15);color:var(--iq-accent)}
+.chip-muted{background:var(--iq-surface);color:var(--iq-muted);border:0.5px solid var(--iq-border)}
+
+/* NBA */
+.nba{padding:16px 18px;border-radius:12px;margin-bottom:22px;display:flex;gap:14px;align-items:flex-start}
+.nba-urgent{background:rgba(224,80,80,.1);border:1px solid rgba(224,80,80,.35)}
+.nba-review{background:rgba(232,160,48,.08);border:1px solid rgba(232,160,48,.3)}
+.nba-fast{background:rgba(45,184,122,.08);border:1px solid rgba(45,184,122,.3)}
+.nba-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.nba-icon.urgent{background:rgba(224,80,80,.2);color:var(--iq-red)}
+.nba-icon.review{background:rgba(232,160,48,.2);color:var(--iq-amber)}
+.nba-icon.fast{background:rgba(45,184,122,.2);color:var(--iq-green)}
+.nba-body{flex:1}
+.nba-cmd{font-size:14px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px}
+.nba-reason{font-size:13px;color:var(--iq-muted);line-height:1.5}
+
+/* two column */
+.grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px}
+@media(max-width:880px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:12px;padding:18px 20px;margin-bottom:18px}
+.panel h2{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--iq-muted);font-weight:500;margin-bottom:14px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.panel-head h2{margin:0}
+
+/* kv grid */
+.kv{display:grid;grid-template-columns:140px 1fr;gap:8px 14px;font-size:13px}
+.kv .k{color:var(--iq-muted)}
+.kv .v{color:var(--iq-text)}
+
+/* flags */
+.flag-pill{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;margin:3px 4px 3px 0;background:var(--iq-surface2);color:var(--iq-muted);border:0.5px solid var(--iq-border)}
+.flag-pill.crit{background:rgba(224,80,80,.12);color:var(--iq-red);border-color:rgba(224,80,80,.3)}
+.flag-pill.warn{background:rgba(232,160,48,.12);color:var(--iq-amber);border-color:rgba(232,160,48,.3)}
+
+/* loss description */
+.desc{font-size:13px;line-height:1.6;color:var(--iq-text);padding:12px 14px;background:var(--iq-surface2);border-radius:8px;border:0.5px solid var(--iq-border)}
+
+/* AI action plan */
+.action-list{display:flex;flex-direction:column;gap:8px}
+.action-item{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--iq-surface2);border:0.5px solid var(--iq-border);border-radius:9px}
+.action-num{width:22px;height:22px;border-radius:50%;background:rgba(74,126,250,.15);border:0.5px solid rgba(74,126,250,.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--iq-accent);flex-shrink:0;margin-top:1px}
+.action-text{flex:1;font-size:13px;line-height:1.5;color:var(--iq-text)}
+
+/* refresh */
+.btn{background:var(--iq-accent);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:500}
+.btn:hover{background:var(--iq-accent2)}
+.btn.ghost{background:transparent;color:var(--iq-muted);border:0.5px solid var(--iq-border)}
+.btn.ghost:hover{color:var(--iq-text);border-color:var(--iq-border2);background:var(--iq-surface)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* weather */
+.weather-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.w-stat{background:var(--iq-surface2);border:0.5px solid var(--iq-border);border-radius:8px;padding:10px 12px}
+.w-stat-label{font-size:10px;color:var(--iq-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.w-stat-value{font-size:16px;font-weight:500}
+.w-stat-unit{font-size:11px;color:var(--iq-muted);font-weight:400}
+.weather-note{font-size:12px;color:var(--iq-muted);line-height:1.5;padding-top:10px;border-top:0.5px solid var(--iq-border);margin-top:8px}
+
+/* files */
+.file-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.file-row{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--iq-surface2);border:0.5px solid var(--iq-border);border-radius:8px;font-size:12px}
+.file-row .file-meta{display:flex;flex-direction:column;gap:2px}
+.file-row .file-name{color:var(--iq-text);font-weight:500;font-size:13px}
+.file-row .file-info{color:var(--iq-muted);font-size:11px}
+.file-row a{font-size:11px}
+.upload-zone{background:var(--iq-surface2);border:0.5px dashed var(--iq-border2);border-radius:9px;padding:14px;text-align:center}
+.upload-zone input[type=file]{display:none}
+.upload-cat{width:100%;background:var(--iq-surface);border:0.5px solid var(--iq-border2);border-radius:7px;color:var(--iq-text);padding:8px 10px;font-size:12px;margin-bottom:8px}
+
+/* feedback */
+.toast{position:fixed;top:20px;right:20px;background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:8px;padding:10px 14px;font-size:12px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none}
+.toast.show{display:block}
+.toast.ok{border-color:rgba(45,184,122,.4)}
+.toast.err{border-color:rgba(224,80,80,.4);color:var(--iq-red)}
+
+/* loading */
+.skeleton{background:linear-gradient(90deg,var(--iq-surface2),var(--iq-surface),var(--iq-surface2));background-size:200% 100%;animation:sk 1.5s infinite;border-radius:6px;height:14px;margin:6px 0}
+@keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* login overlay */
+.login-overlay{position:fixed;inset:0;background:rgba(15,17,23,.94);z-index:1000;display:none;align-items:center;justify-content:center}
+.login-overlay.show{display:flex}
+.login-card{background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:12px;padding:28px;width:360px;max-width:90vw}
+.login-card h2{font-size:16px;font-weight:500;margin-bottom:4px}
+.login-card .sub{font-size:12px;color:var(--iq-muted);margin-bottom:18px}
+.login-card .field{margin-bottom:12px}
+.login-card label{display:block;font-size:12px;color:var(--iq-muted);margin-bottom:6px}
+.login-card input{width:100%;padding:9px 12px;background:var(--iq-bg);border:0.5px solid var(--iq-border2);border-radius:8px;color:var(--iq-text);font-size:13px}
+.login-card button{width:100%;padding:10px;background:var(--iq-accent);color:#fff;border:none;border-radius:8px;font-weight:500;margin-top:6px}
+.login-msg{font-size:12px;min-height:18px;margin-top:6px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-mark">CI</div>
+    <span class="logo-name">Claims Intake</span>
+    <span class="logo-tag">CLAIM FILE</span>
+  </div>
+  <div class="crumb"><a href="/dashboard.html">← Back to dashboard</a></div>
+</div>
+
+<div class="page">
+  <div id="loading" style="text-align:center;padding:60px 0;color:var(--iq-muted)">Loading claim...</div>
+
+  <div id="content" style="display:none">
+    <div class="head">
+      <div>
+        <h1 id="insured-name">—</h1>
+        <div class="sub" id="claim-meta">—</div>
+        <div class="chips" id="chips"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost" onclick="downloadPdf()" id="pdf-btn">Download PDF</button>
+      </div>
+    </div>
+
+    <div id="nba"></div>
+
+    <div class="grid">
+      <!-- LEFT main column -->
+      <div>
+        <div class="panel">
+          <h2>Loss description</h2>
+          <div class="desc" id="loss-desc">—</div>
+        </div>
+
+        <div class="panel">
+          <h2>Flags (<span id="flag-count">0</span>)</h2>
+          <div id="flags-pills"></div>
+        </div>
+
+        <div class="panel">
+          <h2>Property & loss details</h2>
+          <div class="kv" id="kv-details"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>AI action plan</h2>
+            <button class="btn ghost" onclick="refreshBrief()" id="refresh-btn">↻ Refresh</button>
+          </div>
+          <div id="action-plan">
+            <div class="skeleton" style="width:80%"></div>
+            <div class="skeleton" style="width:60%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT sidebar -->
+      <div>
+        <div class="panel">
+          <h2>Weather verification</h2>
+          <div id="weather-content">
+            <div class="skeleton" style="width:80%"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Files (<span id="file-count">0</span>)</h2>
+          </div>
+          <div class="file-list" id="file-list"></div>
+
+          <div class="upload-zone">
+            <select id="upload-cat" class="upload-cat">
+              <option value="photo">Photo of damage</option>
+              <option value="contractor_estimate">Contractor estimate</option>
+              <option value="mitigation_invoice">Mitigation invoice</option>
+              <option value="tarp_invoice">Tarp / temp repair invoice</option>
+              <option value="plumber_invoice">Plumber invoice</option>
+              <option value="police_report">Police report</option>
+              <option value="other">Other document</option>
+            </select>
+            <input type="file" id="upload-input" />
+            <button class="btn" onclick="document.getElementById('upload-input').click()" style="width:100%">+ Add file</button>
+            <div style="font-size:11px;color:var(--iq-muted);margin-top:8px">After uploading new info, refresh the AI action plan above.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Login overlay (only shown if no token) -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-card">
+    <h2>Sign in to Claims Intake</h2>
+    <div class="sub">Adjuster, manager, or admin login</div>
+    <div class="field"><label>Email</label><input type="email" id="login-email"/></div>
+    <div class="field"><label>Password</label><input type="password" id="login-password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <div class="login-msg" id="login-msg"></div>
+    <button onclick="doLogin()">Sign in</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- Config ----
+const API_BASE = localStorage.getItem('claims_api_url') || 'https://claims-intake-backend.onrender.com';
+const TOKEN_KEY = 'claims_dashboard_token';
+const USER_KEY = 'claims_dashboard_user';
+
+function getToken(){return localStorage.getItem(TOKEN_KEY)}
+
+// ---- API helper ----
+async function api(path, opts={}){
+  const headers = {'Content-Type':'application/json', ...(opts.headers||{})};
+  const t = getToken();
+  if(t) headers['Authorization'] = 'Bearer ' + t;
+  const resp = await fetch(API_BASE + path, {...opts, headers});
+  const ct = resp.headers.get('content-type') || '';
+  const body = ct.includes('application/json') ? await resp.json() : await resp.text();
+  if(!resp.ok){
+    if(resp.status === 401){ localStorage.removeItem(TOKEN_KEY); showLogin(); }
+    const d = (body && body.detail) || body;
+    throw new Error(typeof d === 'string' ? d : JSON.stringify(d));
+  }
+  return body;
+}
+
+// multipart upload helper (doesn't set Content-Type, lets browser handle)
+async function apiUpload(path, formData){
+  const headers = {};
+  const t = getToken();
+  if(t) headers['Authorization'] = 'Bearer ' + t;
+  const resp = await fetch(API_BASE + path, {method:'POST', headers, body:formData});
+  if(!resp.ok){
+    const text = await resp.text();
+    throw new Error(text.slice(0,200));
+  }
+  return await resp.json();
+}
+
+// ---- toast ----
+function toast(msg, kind='ok'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + kind;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ---- login ----
+function showLogin(){
+  document.getElementById('login-overlay').classList.add('show');
+}
+async function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pw = document.getElementById('login-password').value;
+  const msg = document.getElementById('login-msg');
+  msg.textContent = 'Signing in...';
+  msg.style.color = 'var(--iq-muted)';
+  try{
+    const r = await api('/auth/login', {method:'POST', body:JSON.stringify({email, password:pw})});
+    localStorage.setItem(TOKEN_KEY, r.access_token);
+    localStorage.setItem(USER_KEY, JSON.stringify({email:r.email, role:r.role, carrier_id:r.carrier_id, user_id:r.user_id}));
+    document.getElementById('login-overlay').classList.remove('show');
+    loadClaim();
+  }catch(e){
+    msg.textContent = 'Sign-in failed: ' + e.message;
+    msg.style.color = 'var(--iq-red)';
+  }
+}
+
+// ---- claim id from URL ----
+function getClaimId(){
+  const p = new URLSearchParams(window.location.search);
+  return p.get('id');
+}
+
+// ---- main load ----
+let claim = null;
+let claimFiles = [];
+
+async function loadClaim(){
+  const id = getClaimId();
+  if(!id){
+    document.getElementById('loading').textContent = 'No claim ID in URL. Open this page from the dashboard.';
+    return;
+  }
+  if(!getToken()){
+    showLogin();
+    return;
+  }
+  try{
+    claim = await api('/claims/' + id);
+    claimFiles = await api('/claims/' + id + '/uploads');
+    renderClaim();
+    renderFiles();
+    renderWeather();
+    renderActionPlan();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+  }catch(e){
+    document.getElementById('loading').innerHTML = '<div style="color:var(--iq-red)">Failed to load: '+e.message+'</div>';
+  }
+}
+
+// ---- render claim header / details / flags ----
+function renderClaim(){
+  document.getElementById('insured-name').textContent = (claim.first_name||'') + ' ' + (claim.last_name||'');
+  const loss = (claim.loss_types||[]).join(', ') || '—';
+  const dol = claim.date_of_loss || '—';
+  const shortId = (claim.id||'').slice(0,8);
+  document.getElementById('claim-meta').textContent = `Claim ${shortId} · ${loss} · DOL ${dol}`;
+
+  // chips
+  const chips = document.getElementById('chips');
+  chips.innerHTML = '';
+  chips.appendChild(makeChip(severityLabel(claim.severity_score), severityClass(claim.severity_score)));
+  chips.appendChild(makeChip('status: '+(claim.status||'').replace('_',' '), statusClass(claim.status)));
+  if(claim.adjuster_id) chips.appendChild(makeChip('assigned', 'chip-blue'));
+
+  // NBA box
+  const nbaEl = document.getElementById('nba');
+  const cmd = (claim.nba_command || 'review').replace(/_/g,' ').toUpperCase();
+  const cls = nbaClass(claim.nba_command);
+  const icon = nbaIcon(claim.nba_command);
+  nbaEl.className = 'nba ' + cls.box;
+  nbaEl.innerHTML = `
+    <div class="nba-icon ${cls.icon}">${icon}</div>
+    <div class="nba-body">
+      <div class="nba-cmd">${cmd}</div>
+      <div class="nba-reason">${claim.nba_reason || ''}</div>
+    </div>
+  `;
+
+  // loss description
+  document.getElementById('loss-desc').textContent = claim.loss_description || 'No description provided.';
+
+  // flags
+  const flags = claim.flags || [];
+  document.getElementById('flag-count').textContent = flags.length;
+  const pills = document.getElementById('flags-pills');
+  pills.innerHTML = '';
+  if(!flags.length){
+    pills.innerHTML = '<span style="color:var(--iq-muted);font-size:12px">No flags raised.</span>';
+  } else {
+    flags.forEach(f => {
+      const cls = /collapse|injury|gas|electrical|fire|critical|emergency/i.test(f) ? 'crit'
+        : /habitab|policy|prior|sewer|vacancy|roof age|microbial/i.test(f) ? 'warn' : '';
+      const span = document.createElement('span');
+      span.className = 'flag-pill ' + cls;
+      span.textContent = f;
+      pills.appendChild(span);
+    });
+  }
+
+  // KV details
+  const kv = document.getElementById('kv-details');
+  kv.innerHTML = '';
+  const fields = [
+    ['Address', `${claim.addr_street||''}, ${claim.addr_city||''} ${claim.addr_state||''} ${claim.addr_zip||''}`],
+    ['Policy #', claim.policy_number || '—'],
+    ['Phone', claim.phone || '—'],
+    ['Email', claim.email || '—'],
+    ['Habitable', claim.habitable || '—'],
+    ['Roof', claim.roof_year ? `${claim.roof_year} · ${claim.roof_material||''}` : '—'],
+    ['Water cause', claim.water_cause || '—'],
+    ['Contents damaged', boolStr(claim.contents_damaged)],
+    ['Structural damage', boolStr(claim.structural_damage)],
+    ['Photos uploaded', boolStr(claim.photos_uploaded)],
+  ];
+  fields.forEach(([k,v]) => {
+    kv.innerHTML += `<div class="k">${k}</div><div class="v">${v}</div>`;
+  });
+}
+
+function boolStr(b){return b===true?'Yes':b===false?'No':'—'}
+
+function makeChip(text, cls){
+  const span = document.createElement('span');
+  span.className = 'chip ' + cls;
+  span.textContent = text;
+  return span;
+}
+
+function severityLabel(s){return 'severity ' + (s||0)}
+function severityClass(s){
+  if((s||0) >= 80) return 'chip-red';
+  if((s||0) >= 50) return 'chip-amber';
+  return 'chip-green';
+}
+function statusClass(s){
+  if(s === 'closed') return 'chip-muted';
+  if(s === 'needs_info') return 'chip-amber';
+  return 'chip-blue';
+}
+function nbaClass(cmd){
+  if(cmd === 'escalate_emergency') return {box:'nba-urgent', icon:'urgent'};
+  if(cmd === 'route_fast_track') return {box:'nba-fast', icon:'fast'};
+  return {box:'nba-review', icon:'review'};
+}
+function nbaIcon(cmd){
+  if(cmd === 'escalate_emergency') return '⚠';
+  if(cmd === 'route_fast_track') return '✓';
+  return '◷';
+}
+
+// ---- weather ----
+function renderWeather(){
+  const w = claim.weather_verification;
+  const el = document.getElementById('weather-content');
+  if(!w){
+    el.innerHTML = `
+      <div style="color:var(--iq-muted);font-size:12px;margin-bottom:10px">No weather data yet.</div>
+      <button class="btn" onclick="pullWeather()" style="width:100%">Verify weather</button>
+    `;
+    return;
+  }
+  el.innerHTML = `
+    <div class="weather-grid">
+      <div class="w-stat">
+        <div class="w-stat-label">Wind</div>
+        <div class="w-stat-value">${w.max_wind_mph ?? '—'}<span class="w-stat-unit"> mph</span></div>
+      </div>
+      <div class="w-stat">
+        <div class="w-stat-label">Hail</div>
+        <div class="w-stat-value">${w.max_hail_size_in ?? '—'}<span class="w-stat-unit"> in</span></div>
+      </div>
+      <div class="w-stat">
+        <div class="w-stat-label">Precip</div>
+        <div class="w-stat-value">${w.precipitation_in ?? '—'}<span class="w-stat-unit"> in</span></div>
+      </div>
+    </div>
+    <div class="weather-note">${w.summary || ''}</div>
+    <button class="btn ghost" onclick="pullWeather(true)" style="width:100%;margin-top:10px">↻ Re-pull weather</button>
+  `;
+}
+
+async function pullWeather(refresh=false){
+  toast('Pulling weather data...');
+  try{
+    const w = await api(`/claims/${claim.id}/weather${refresh?'?refresh=true':''}`, {method:'POST'});
+    claim.weather_verification = w;
+    renderWeather();
+    toast(w.verified ? 'Weather data updated' : 'Weather unavailable — check API key', w.verified ? 'ok' : 'err');
+  }catch(e){
+    toast('Weather failed: ' + e.message, 'err');
+  }
+}
+
+// ---- AI brief / action plan ----
+function renderActionPlan(){
+  const brief = claim.assistant_brief;
+  const el = document.getElementById('action-plan');
+  if(!brief || !brief.action_plan){
+    el.innerHTML = `
+      <div style="color:var(--iq-muted);font-size:12px;margin-bottom:10px">No action plan yet.</div>
+      <button class="btn" onclick="refreshBrief()" style="width:100%">Generate AI brief</button>
+    `;
+    return;
+  }
+  let html = '<div class="action-list">';
+  brief.action_plan.forEach((a, i) => {
+    html += `
+      <div class="action-item">
+        <div class="action-num">${i+1}</div>
+        <div class="action-text">${a}</div>
+      </div>
+    `;
+  });
+  html += '</div>';
+  if(brief.document_observations && brief.document_observations.length){
+    html += `<div style="margin-top:14px"><div style="font-size:11px;text-transform:uppercase;color:var(--iq-muted);letter-spacing:.05em;margin-bottom:8px">Document observations</div>`;
+    brief.document_observations.forEach(o => {
+      html += `<div style="font-size:12px;color:var(--iq-text);padding:8px 12px;background:var(--iq-surface2);border:0.5px solid var(--iq-border);border-radius:7px;margin-bottom:6px">• ${o}</div>`;
+    });
+    html += '</div>';
+  }
+  if(brief.settlement_eligibility){
+    html += `<div style="margin-top:14px;padding:12px 14px;background:rgba(45,184,122,.08);border:0.5px solid rgba(45,184,122,.3);border-radius:8px"><div style="font-size:11px;text-transform:uppercase;color:var(--iq-green);letter-spacing:.05em;margin-bottom:6px;font-weight:500">Settlement note</div><div style="font-size:13px;color:var(--iq-text)">${brief.settlement_eligibility}</div></div>`;
+  }
+  el.innerHTML = html;
+}
+
+async function refreshBrief(){
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true; btn.textContent = '↻ Generating...';
+  document.getElementById('action-plan').innerHTML = `<div class="skeleton" style="width:90%"></div><div class="skeleton" style="width:75%"></div><div class="skeleton" style="width:80%"></div>`;
+  try{
+    const b = await api(`/claims/${claim.id}/assistant/brief?refresh=true`, {method:'POST'});
+    claim.assistant_brief = b;
+    if(b.weather) claim.weather_verification = b.weather;
+    renderActionPlan();
+    renderWeather();
+    toast('AI brief regenerated');
+  }catch(e){
+    toast('Refresh failed: ' + e.message, 'err');
+    renderActionPlan();
+  }finally{
+    btn.disabled = false; btn.textContent = '↻ Refresh';
+  }
+}
+
+// ---- files ----
+function renderFiles(){
+  const list = document.getElementById('file-list');
+  document.getElementById('file-count').textContent = claimFiles.length;
+  if(!claimFiles.length){
+    list.innerHTML = '<div style="color:var(--iq-muted);font-size:12px;padding:8px 0">No files yet.</div>';
+    return;
+  }
+  list.innerHTML = claimFiles.map(f => `
+    <div class="file-row">
+      <div class="file-meta">
+        <div class="file-name">${f.filename}</div>
+        <div class="file-info">${prettyCategory(f.category)} · ${formatBytes(f.size_bytes)}</div>
+      </div>
+      <a onclick="openFile('${f.id}')">view</a>
+    </div>
+  `).join('');
+}
+
+function prettyCategory(c){
+  const map = {photo:'Photo', mitigation_invoice:'Mitigation invoice', tarp_invoice:'Tarp invoice', plumber_invoice:'Plumber invoice', contractor_estimate:'Contractor estimate', police_report:'Police report', other:'Document'};
+  return map[c] || c;
+}
+
+function formatBytes(n){
+  if(!n) return '?';
+  if(n < 1024) return n + ' B';
+  if(n < 1024*1024) return Math.round(n/1024) + ' KB';
+  return (n/1024/1024).toFixed(1) + ' MB';
+}
+
+async function openFile(fileId){
+  try{
+    const r = await api(`/claims/${claim.id}/uploads/${fileId}/url`);
+    if(r.url) window.open(r.url, '_blank');
+  }catch(e){
+    toast('Failed to get URL: ' + e.message, 'err');
+  }
+}
+
+document.getElementById('upload-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const cat = document.getElementById('upload-cat').value;
+  const fd = new FormData();
+  fd.append('category', cat);
+  fd.append('file', file);
+  toast('Uploading ' + file.name + '...');
+  try{
+    await apiUpload(`/claims/${claim.id}/uploads`, fd);
+    toast('Uploaded. Refresh AI brief to incorporate.', 'ok');
+    claimFiles = await api(`/claims/${claim.id}/uploads`);
+    renderFiles();
+  }catch(e){
+    toast('Upload failed: ' + e.message, 'err');
+  }finally{
+    e.target.value = '';
+  }
+});
+
+// ---- PDF ----
+async function downloadPdf(){
+  const btn = document.getElementById('pdf-btn');
+  btn.disabled = true; btn.textContent = 'Generating...';
+  try{
+    const resp = await fetch(API_BASE + `/claims/${claim.id}/report.pdf`, {
+      headers: {'Authorization':'Bearer ' + getToken()}
+    });
+    if(!resp.ok) throw new Error('HTTP ' + resp.status);
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `claim-${claim.id.slice(0,8)}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }catch(e){
+    toast('PDF failed: ' + e.message, 'err');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Download PDF';
+  }
+}
+
+// ---- boot ----
+loadClaim();
+</script>
+
+<script src="/_footer.js"></script>
+</body>
+</html>

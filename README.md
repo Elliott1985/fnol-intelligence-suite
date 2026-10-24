@@ -1,139 +1,40 @@
-# FNOL Intelligence Suite  
-Structured First Notice of Loss Intake & Intelligent Triage Platform
+# Netlify deploy bundle
 
-A workflow-driven First Notice of Loss (FNOL) intake system designed to standardize claim data capture, enforce validation logic, and prepare structured claim data for downstream automation and processing.
+This folder is the **complete site** to deploy to Netlify. Drag the entire
+folder into Netlify's "Deploy manually" area and you'll have three pages
+on one domain:
 
-Built using Streamlit with AI-assisted triage powered by Google Gemini 2.0 Flash.
+| URL | What it is | Who uses it |
+|---|---|---|
+| `/` | Intake form (policyholders, prospect demos) | Policyholders, prospects |
+| `/dashboard.html` | Carrier portal — KPIs, workload, recent claims | Admin / manager |
+| `/claim.html?id=<uuid>` | Single-claim work surface | Adjusters |
 
----
+## Files
 
-## Overview
+- `index.html` — existing intake demo (drop yours in here)
+- `dashboard.html` — carrier dashboard (auto-detects role and shows the right view)
+- `claim.html` — claim detail page with file uploads + refresh AI brief
 
-The FNOL Intelligence Suite demonstrates how structured intake architecture improves data quality, reduces claim cycle time, and enables intelligent routing and risk detection at first notice.
+## Deploy
 
-The platform enforces required data validation, applies rule-based and AI-assisted triage logic, and prepares structured outputs ready for automation pipelines, claims systems, or analytics workflows.
+1. Make sure all three files are in this folder.
+2. Open https://app.netlify.com → drag this folder (the `netlify-site` folder
+   itself, not its contents) onto the deploy area of your existing site
+   (or create a new site).
+3. Wait for the deploy to finish — usually ~10 seconds.
+4. Visit `https://your-site.netlify.app/` to see the intake, and
+   `https://your-site.netlify.app/dashboard.html` to see the carrier portal.
 
-Designed for:
+## CORS update on Render
 
-- Insurtech carriers
-- Claims operations teams
-- Automation engineers
-- Product and workflow architects
+Your Render backend's `CORS_ORIGINS` env var must include the Netlify URL
+**without** any specific path. So `https://claims-intake-demo.netlify.app`
+covers all three pages on that domain.
 
----
+## Required: drop your existing index.html in here
 
-## Core Capabilities
-
-### Structured Data Capture
-- Policy number validation
-- Date of loss validation with policy period checks
-- Guided loss classification (Fire, Water, Hail, Wind, Theft)
-- Detailed loss description capture
-- Contact information normalization
-- Photo and document upload support
-
-### Validation & Logic Enforcement
-- Required field enforcement
-- Logical dependency validation
-- Policy period verification
-- Structured error handling and feedback
-
-### AI-Assisted Triage (Gemini 2.0 Flash)
-- SIU risk flag detection (vague timelines, vacancy, conflicting narratives)
-- Subrogation opportunity detection (3rd-party liability indicators)
-- ALE / total loss early severity recognition
-- Intelligent claim classification support
-
-### Smart Routing & Workflow Readiness
-- State-based adjuster assignment logic
-- Emergency housing protocol activation
-- Structured claim receipt generation
-- Automation-ready structured output
-
----
-
-## Business Objective
-
-Traditional FNOL processes often produce incomplete or inconsistent data, resulting in:
-
-- Manual follow-up calls
-- Increased claim handling time
-- Delays in assignment
-- Downstream rework
-
-This platform demonstrates how intelligent intake validation and early triage can:
-
-- Improve first-touch data accuracy
-- Reduce intake-related errors
-- Accelerate assignment decisions
-- Enable automation across the claims lifecycle
-
----
-
-## Live Demo
-
-🚀 **[Try the Live Demo](https://elliott1985-fnol-intelligence-su-fnol-intelligence-suite-hp4xpe.streamlit.app)**
-
----
-
-## Screenshots
-
-| Intake Form | Validation | Triage Results | Routing Output |
-|-------------|------------|----------------|----------------|
-| ![Intake Form](docs/images/intake-form.png) | ![Validation](docs/images/validation-error.png) | ![Triage](docs/images/triage-results.png) | ![Routing](docs/images/routing-output.png) |
-
----
-
-## Architecture
-
-```
-fnol_intelligence_suite.py     # Streamlit application entry point
-validation/                    # Data validation logic
-triage/                        # AI-assisted analysis logic
-routing/                       # Adjuster assignment and workflow logic
-utils/                         # Helper utilities
-```
-
----
-
-## Configuration
-
-### Policy Period
-Modify `POLICY_START_DATE` and `POLICY_END_DATE` to adjust effective period validation logic.
-
-### State-to-Adjuster Mapping
-
-```python
-STATE_ADJUSTER_MAP = {
-    "GA": "Sarah Mitchell",
-    "FL": "Carlos Rodriguez",
-    "TX": "Jennifer Thompson",
-    "AL": "Michael Chen",
-}
-```
-
----
-
-## Design Principles
-
-- Structured intake-first architecture
-- Validation-driven workflow control
-- AI as enhancement, not replacement
-- Automation-ready output formatting
-- Compliance-conscious design
-
----
-
-## Future Enhancements
-
-- API integration with core claim systems
-- Fraud risk pre-scoring dashboard
-- Claim severity prediction module
-- Automated adjuster workload balancing
-- Structured audit logging
-
----
-
-## License
-
-Proprietary – All rights reserved.
+The `dashboard.html` and `claim.html` files in this folder assume your
+existing intake `index.html` (with the Warp-built login flow + multi-step
+form) lives alongside them. Copy your existing `index.html` into this
+folder before deploying.

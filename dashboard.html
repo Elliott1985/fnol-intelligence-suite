@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard — Claims Intake</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --iq-bg:#0f1117;--iq-surface:#181c25;--iq-surface2:#1e2330;
+  --iq-border:#2a2f3d;--iq-border2:#343a4d;--iq-text:#f0f1f5;
+  --iq-muted:#8b90a0;--iq-accent:#4a7efa;--iq-accent2:#3567d4;
+  --iq-green:#2db87a;--iq-amber:#e8a030;--iq-red:#e05050;
+}
+html,body{min-height:100vh;background:var(--iq-bg);color:var(--iq-text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px}
+a{color:var(--iq-accent);text-decoration:none;cursor:pointer}
+a:hover{text-decoration:underline}
+button{font-family:inherit;cursor:pointer}
+
+/* topbar */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:0.5px solid var(--iq-border);background:var(--iq-bg);position:sticky;top:0;z-index:5}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{width:30px;height:30px;background:var(--iq-accent);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:12px}
+.logo-name{font-size:15px;font-weight:500}
+.logo-tag{font-size:10px;color:var(--iq-muted);padding:3px 8px;background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:20px}
+.topbar-right{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--iq-muted)}
+.icon-btn{background:transparent;border:0.5px solid var(--iq-border);color:var(--iq-muted);padding:6px 12px;border-radius:7px;font-size:12px}
+.icon-btn:hover{color:var(--iq-text);border-color:var(--iq-border2);background:var(--iq-surface)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--iq-green);display:inline-block;margin-right:6px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* page */
+.page{max-width:1200px;margin:0 auto;padding:24px 22px 64px}
+.page-title{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px}
+.page-title h1{font-size:22px;font-weight:500;letter-spacing:-.2px;margin-bottom:4px}
+.page-title .sub{font-size:13px;color:var(--iq-muted)}
+
+/* view-switch tabs (admin vs adjuster) */
+.tabs{display:flex;gap:4px;background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:9px;padding:3px;margin-bottom:18px}
+.tab{padding:7px 16px;font-size:12px;border-radius:7px;color:var(--iq-muted);background:transparent;border:none;font-weight:500}
+.tab.active{background:var(--iq-accent);color:#fff}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpi{background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:12px;padding:18px}
+.kpi .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--iq-muted);margin-bottom:10px;font-weight:500}
+.kpi .val{font-size:28px;font-weight:500;letter-spacing:-.02em}
+.kpi .delta{font-size:11px;color:var(--iq-muted);margin-top:4px}
+.kpi.crit .val{color:var(--iq-red)}
+.kpi.ok .val{color:var(--iq-green)}
+@media(max-width:880px){.kpis{grid-template-columns:repeat(2,1fr)}}
+
+/* layout */
+.grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:22px}
+@media(max-width:880px){.grid-2{grid-template-columns:1fr}}
+.panel{background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:12px;padding:20px}
+.panel h2{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--iq-muted);font-weight:500;margin-bottom:14px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.panel-head h2{margin:0}
+
+/* buttons */
+.btn{background:var(--iq-accent);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:500}
+.btn:hover{background:var(--iq-accent2)}
+.btn.ghost{background:transparent;color:var(--iq-muted);border:0.5px solid var(--iq-border)}
+.btn.ghost:hover{color:var(--iq-text);border-color:var(--iq-border2);background:var(--iq-surface)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--iq-muted);padding:10px 8px;border-bottom:0.5px solid var(--iq-border)}
+td{padding:12px 8px;border-bottom:0.5px solid var(--iq-border);color:var(--iq-muted)}
+tbody tr{transition:background .15s}
+tbody tr:hover{background:var(--iq-surface2)}
+tbody tr td:first-child{color:var(--iq-text);font-weight:500}
+.empty{text-align:center;color:var(--iq-muted);padding:24px;font-size:13px}
+.claim-link{color:var(--iq-accent);font-weight:500;text-decoration:none}
+.claim-link:hover{text-decoration:underline}
+
+/* chips */
+.chip{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;letter-spacing:.03em}
+.chip-red{background:rgba(224,80,80,.15);color:var(--iq-red)}
+.chip-amber{background:rgba(232,160,48,.15);color:var(--iq-amber)}
+.chip-green{background:rgba(45,184,122,.15);color:var(--iq-green)}
+.chip-blue{background:rgba(74,126,250,.15);color:var(--iq-accent)}
+.chip-muted{background:var(--iq-surface2);color:var(--iq-muted);border:0.5px solid var(--iq-border)}
+
+/* workload */
+.workload-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:0.5px solid var(--iq-border)}
+.workload-row:last-child{border-bottom:0}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--iq-accent);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:11px;margin-right:11px}
+.workload-meta{display:flex;align-items:center}
+.workload-name{font-weight:500;color:var(--iq-text);font-size:13px}
+.workload-sub{font-size:11px;color:var(--iq-muted);margin-top:1px}
+.workload-count{font-weight:500;font-size:13px}
+
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(15,17,23,.85);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100}
+.modal-bg.show{display:flex}
+.modal{background:var(--iq-surface);border:0.5px solid var(--iq-border2);border-radius:12px;padding:26px;width:90%;max-width:480px;max-height:86vh;overflow-y:auto}
+.modal h2{font-size:17px;margin-bottom:4px}
+.modal .sub{font-size:12px;color:var(--iq-muted);margin-bottom:18px}
+.form-row{margin-bottom:12px}
+.form-row label{display:block;font-size:12px;color:var(--iq-muted);margin-bottom:6px}
+.form-row input,.form-row select{width:100%;padding:9px 12px;background:var(--iq-bg);border:0.5px solid var(--iq-border2);border-radius:8px;color:var(--iq-text);font-size:13px}
+.form-row input:focus,.form-row select:focus{outline:none;border-color:var(--iq-accent)}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.form-err{background:rgba(224,80,80,.1);border:0.5px solid rgba(224,80,80,.3);color:var(--iq-red);padding:8px 12px;border-radius:7px;font-size:12px;margin-bottom:12px;display:none}
+.form-err.show{display:block}
+.form-ok{background:rgba(45,184,122,.1);border:0.5px solid rgba(45,184,122,.3);color:var(--iq-green);padding:8px 12px;border-radius:7px;font-size:12px;margin-bottom:12px;display:none}
+.form-ok.show{display:block}
+
+/* login */
+.login-overlay{position:fixed;inset:0;background:rgba(15,17,23,.94);z-index:1000;display:none;align-items:center;justify-content:center}
+.login-overlay.show{display:flex}
+.login-card{background:var(--iq-surface);border:0.5px solid var(--iq-border);border-radius:12px;padding:28px;width:360px;max-width:90vw}
+.login-card h2{font-size:16px;font-weight:500;margin-bottom:4px}
+.login-card .sub{font-size:12px;color:var(--iq-muted);margin-bottom:18px}
+.login-card .field{margin-bottom:12px}
+.login-card label{display:block;font-size:12px;color:var(--iq-muted);margin-bottom:6px}
+.login-card input{width:100%;padding:9px 12px;background:var(--iq-bg);border:0.5px solid var(--iq-border2);border-radius:8px;color:var(--iq-text);font-size:13px}
+.login-card button{width:100%;padding:10px;background:var(--iq-accent);color:#fff;border:none;border-radius:8px;font-weight:500;margin-top:6px}
+.login-msg{font-size:12px;min-height:18px;margin-top:6px}
+.api-cfg{margin-top:16px;padding-top:14px;border-top:0.5px solid var(--iq-border);font-size:11px;color:var(--iq-muted)}
+.api-cfg a{font-size:11px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-card">
+    <h2>Sign in</h2>
+    <div class="sub">Carrier portal — admin, manager, or adjuster</div>
+    <div class="form-err" id="login-err"></div>
+    <div class="field"><label>Email</label><input type="email" id="login-email"/></div>
+    <div class="field"><label>Password</label><input type="password" id="login-password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <button onclick="doLogin()">Sign in</button>
+    <div class="api-cfg">API: <span id="api-display"></span> · <a onclick="changeApiUrl()">change</a></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none">
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-mark">CI</div>
+      <span class="logo-name">Claims Intake</span>
+      <span class="logo-tag">DASHBOARD</span>
+    </div>
+    <div class="topbar-right">
+      <span><span class="live-dot"></span>Refreshes every 60s</span>
+      <span id="user-badge"></span>
+      <button class="icon-btn" onclick="refreshAll()">Refresh</button>
+      <button class="icon-btn" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="page-title">
+      <div>
+        <h1 id="page-h1">Operations overview</h1>
+        <div class="sub" id="page-sub">Live snapshot of your claims pipeline and team workload</div>
+      </div>
+    </div>
+
+    <!-- Role tabs (only shown when admin/manager — adjusters see only "My claims") -->
+    <div class="tabs" id="role-tabs" style="display:none">
+      <button class="tab active" data-view="all" onclick="switchView('all')">All claims (carrier)</button>
+      <button class="tab" data-view="mine" onclick="switchView('mine')">My assigned claims</button>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpis" id="kpis-container">
+      <div class="kpi"><div class="lbl">Open claims</div><div class="val" id="kpi-open">—</div><div class="delta">All non-closed claims</div></div>
+      <div class="kpi crit"><div class="lbl">Critical flags</div><div class="val" id="kpi-critical">—</div><div class="delta">Severity 80+ or life-safety</div></div>
+      <div class="kpi ok"><div class="lbl">Closed this month</div><div class="val" id="kpi-closed">—</div><div class="delta">Resolved + signed off</div></div>
+      <div class="kpi"><div class="lbl">Avg intake</div><div class="val"><span id="kpi-avg">—</span> <span style="font-size:14px;color:var(--iq-muted)">min</span></div><div class="delta">Time to complete intake</div></div>
+    </div>
+
+    <!-- Admin only: workload + flags -->
+    <div class="grid-2" id="admin-blocks">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Adjuster workload</h2>
+          <button class="btn" onclick="openInvite()">+ Add team member</button>
+        </div>
+        <div id="workload-list"><div class="empty">Loading...</div></div>
+      </div>
+      <div class="panel">
+        <h2>Top flags</h2>
+        <div style="height:240px;position:relative;"><canvas id="flag-chart"></canvas></div>
+        <div id="flag-empty" class="empty" style="display:none">No flags yet</div>
+      </div>
+    </div>
+
+    <!-- Recent claims (also serves as "my claims" when in adjuster view) -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2 id="claims-section-title">Recent claims</h2>
+        <span style="font-size:12px;color:var(--iq-muted)"><span class="live-dot"></span><span id="claims-count">0</span> shown</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Claim ID</th>
+            <th>Insured</th>
+            <th>Loss types</th>
+            <th>Severity</th>
+            <th>Flags</th>
+            <th>Status</th>
+            <th>Submitted</th>
+          </tr>
+        </thead>
+        <tbody id="claims-tbody">
+          <tr><td colspan="7" class="empty">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- INVITE MODAL -->
+<div class="modal-bg" id="invite-modal">
+  <div class="modal">
+    <h2>Add team member</h2>
+    <div class="sub">Create a new account in your carrier organization. They'll be able to sign in with the password you set and start handling claims.</div>
+    <div class="form-err" id="invite-err"></div>
+    <div class="form-ok" id="invite-ok"></div>
+    <div class="form-row"><label>Full name</label><input id="invite-name" placeholder="Bob Smith"/></div>
+    <div class="form-row"><label>Email</label><input type="email" id="invite-email" placeholder="bob@carrier.com"/></div>
+    <div class="form-row"><label>Temporary password (share securely)</label><input type="text" id="invite-password" placeholder="Min 8 characters"/></div>
+    <div class="form-row"><label>Role</label><select id="invite-role"><option value="adjuster">Adjuster — handles claims</option><option value="manager">Manager — can assign + close claims</option></select></div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal('invite-modal')">Cancel</button>
+      <button class="btn" onclick="submitInvite()" id="invite-submit">Create account</button>
+    </div>
+  </div>
+</div>
+
+<!-- API URL MODAL -->
+<div class="modal-bg" id="api-modal">
+  <div class="modal">
+    <h2>API URL</h2>
+    <div class="sub">Your Render backend URL — only change this if you've moved the backend.</div>
+    <div class="form-row"><label>URL (no trailing slash)</label><input id="api-input" placeholder="https://claims-intake-backend.onrender.com"/></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="saveApiUrl()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- Config ----
+const API_URL_KEY = 'claims_api_url';
+const TOKEN_KEY = 'claims_dashboard_token';
+const USER_KEY = 'claims_dashboard_user';
+const DEFAULT_API = 'https://claims-intake-backend.onrender.com';
+
+function getApiUrl(){return localStorage.getItem(API_URL_KEY) || DEFAULT_API}
+function getToken(){return localStorage.getItem(TOKEN_KEY)}
+function getUser(){try{return JSON.parse(localStorage.getItem(USER_KEY)||'null')}catch{return null}}
+
+let currentView = 'all'; // or 'mine' for adjuster
+let allClaims = []; // raw claims list for filtering
+
+// ---- API helper ----
+async function api(path, opts={}){
+  const headers = {'Content-Type':'application/json', ...(opts.headers||{})};
+  const t = getToken();
+  if(t) headers['Authorization'] = 'Bearer ' + t;
+  const resp = await fetch(getApiUrl() + path, {...opts, headers});
+  const ct = resp.headers.get('content-type') || '';
+  const body = ct.includes('application/json') ? await resp.json() : await resp.text();
+  if(!resp.ok){
+    if(resp.status === 401){ localStorage.removeItem(TOKEN_KEY); showLogin(); }
+    const d = (body && body.detail) || body;
+    throw new Error(typeof d === 'string' ? d : JSON.stringify(d));
+  }
+  return body;
+}
+
+// ---- Auth ----
+async function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-err');
+  errEl.classList.remove('show');
+  if(!email || !password){
+    errEl.textContent = 'Email and password required';
+    errEl.classList.add('show');
+    return;
+  }
+  try{
+    const r = await api('/auth/login', {method:'POST', body:JSON.stringify({email, password})});
+    localStorage.setItem(TOKEN_KEY, r.access_token);
+    localStorage.setItem(USER_KEY, JSON.stringify({email:r.email, role:r.role, carrier_id:r.carrier_id, user_id:r.user_id}));
+    showDashboard();
+  }catch(e){
+    errEl.textContent = e.message || 'Login failed';
+    errEl.classList.add('show');
+  }
+}
+
+function signOut(){
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  showLogin();
+}
+
+function showLogin(){
+  document.getElementById('login-overlay').classList.add('show');
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('api-display').textContent = getApiUrl();
+}
+
+function showDashboard(){
+  document.getElementById('login-overlay').classList.remove('show');
+  document.getElementById('dashboard').style.display = 'block';
+  const u = getUser();
+  if(u){
+    document.getElementById('user-badge').textContent = `${u.email} · ${u.role}`;
+    // Adjusters: hide admin blocks, default to "my claims" view
+    if(u.role === 'adjuster'){
+      document.getElementById('admin-blocks').style.display = 'none';
+      document.getElementById('role-tabs').style.display = 'none';
+      document.getElementById('page-h1').textContent = 'My assigned claims';
+      document.getElementById('page-sub').textContent = 'Claims currently assigned to you';
+      document.getElementById('claims-section-title').textContent = 'My claims';
+      currentView = 'mine';
+    } else {
+      // admin or manager: show tabs so they can switch
+      document.getElementById('role-tabs').style.display = 'flex';
+    }
+  }
+  refreshAll();
+  if(!window._dashRefresh){
+    window._dashRefresh = setInterval(refreshAll, 60000);
+  }
+}
+
+// ---- Modal helpers ----
+function openModal(id){document.getElementById(id).classList.add('show')}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+document.querySelectorAll('.modal-bg').forEach(m=>{
+  m.addEventListener('click', e=>{if(e.target===m)m.classList.remove('show')});
+});
+
+function changeApiUrl(){
+  document.getElementById('api-input').value = getApiUrl();
+  openModal('api-modal');
+}
+function saveApiUrl(){
+  const v = document.getElementById('api-input').value.trim().replace(/\/$/, '');
+  if(v) localStorage.setItem(API_URL_KEY, v);
+  closeModal('api-modal');
+  document.getElementById('api-display').textContent = getApiUrl();
+}
+
+// ---- View switching ----
+function switchView(v){
+  currentView = v;
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.view === v);
+  });
+  if(v === 'mine'){
+    document.getElementById('claims-section-title').textContent = 'My claims';
+  } else {
+    document.getElementById('claims-section-title').textContent = 'Recent claims';
+  }
+  renderClaimsTable();
+}
+
+// ---- Dashboard data ----
+let chart = null;
+
+async function refreshAll(){
+  try{
+    const u = getUser();
+    if(!u) return;
+    const data = await api('/dashboard');
+    renderKpis(data);
+    if(u.role !== 'adjuster'){
+      renderWorkload(data.adjuster_workload || []);
+      renderFlags(data.flag_breakdown || {});
+    }
+    // For adjusters, we need to filter to assigned-to-me from /claims
+    // For admins viewing 'mine', same. So pull /claims if 'mine' view.
+    if(currentView === 'mine'){
+      allClaims = await api('/claims?assigned_to_me=true');
+    } else {
+      allClaims = data.recent_claims || [];
+    }
+    renderClaimsTable();
+  }catch(e){
+    console.error('refresh failed', e);
+  }
+}
+
+function renderKpis(d){
+  document.getElementById('kpi-open').textContent = d.open_claims ?? 0;
+  document.getElementById('kpi-critical').textContent = d.critical_flags ?? 0;
+  document.getElementById('kpi-closed').textContent = d.closed_this_month ?? 0;
+  document.getElementById('kpi-avg').textContent = (d.avg_intake_minutes ?? 0).toFixed(1);
+}
+
+function initials(name){return (name||'?').split(/\s+/).map(s=>s[0]).slice(0,2).join('').toUpperCase()}
+
+function renderWorkload(list){
+  const el = document.getElementById('workload-list');
+  if(!list.length){
+    el.innerHTML = `<div class="empty">No adjusters yet.<br><span style="font-size:11px">Click "+ Add team member" to invite your first one.</span></div>`;
+    return;
+  }
+  el.innerHTML = list.map(a => `
+    <div class="workload-row">
+      <div class="workload-meta">
+        <div class="avatar">${initials(a.name)}</div>
+        <div>
+          <div class="workload-name">${a.name || 'Unnamed'}</div>
+          <div class="workload-sub">${a.adjuster_id ? a.adjuster_id.slice(0,8) : ''}</div>
+        </div>
+      </div>
+      <div class="workload-count">${a.open_claims} <span style="color:var(--iq-muted);font-size:11px;font-weight:400">claims</span></div>
+    </div>
+  `).join('');
+}
+
+function renderFlags(breakdown){
+  const labels = Object.keys(breakdown);
+  const values = Object.values(breakdown);
+  if(!labels.length){
+    document.getElementById('flag-chart').style.display = 'none';
+    document.getElementById('flag-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('flag-chart').style.display = 'block';
+  document.getElementById('flag-empty').style.display = 'none';
+  if(chart) chart.destroy();
+  const ctx = document.getElementById('flag-chart').getContext('2d');
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: labels.map(l => {
+          if(/collapse|injury|gas|electrical|fire|critical/i.test(l)) return '#e05050';
+          if(/habitab|policy|prior|sewer|vacancy|roof age/i.test(l)) return '#e8a030';
+          return '#4a7efa';
+        }),
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: {legend:{display:false}},
+      scales: {
+        x: {ticks:{color:'#8b90a0',stepSize:1,font:{size:10}},grid:{color:'#2a2f3d'}},
+        y: {ticks:{color:'#8b90a0',font:{size:10}},grid:{display:false}}
+      }
+    }
+  });
+}
+
+function severityChip(score){
+  if(score >= 80) return `<span class="chip chip-red">${score}</span>`;
+  if(score >= 50) return `<span class="chip chip-amber">${score}</span>`;
+  return `<span class="chip chip-green">${score}</span>`;
+}
+
+function statusChip(status){
+  const map = {new:'chip-muted', needs_info:'chip-amber', assigned:'chip-blue', in_review:'chip-blue', fast_track:'chip-green', closed:'chip-muted'};
+  return `<span class="chip ${map[status]||'chip-muted'}">${status.replace('_',' ')}</span>`;
+}
+
+function timeAgo(iso){
+  const d = new Date(iso);
+  const mins = Math.floor((Date.now() - d.getTime()) / 60000);
+  if(mins < 1) return 'just now';
+  if(mins < 60) return mins + 'm ago';
+  const hr = Math.floor(mins / 60);
+  if(hr < 24) return hr + 'h ago';
+  return Math.floor(hr/24) + 'd ago';
+}
+
+function renderClaimsTable(){
+  const tbody = document.getElementById('claims-tbody');
+  document.getElementById('claims-count').textContent = allClaims.length;
+  if(!allClaims.length){
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">${currentView === 'mine' ? 'No claims assigned to you yet.' : 'No claims submitted yet.'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = allClaims.map(c => {
+    const shortId = (c.id || '').slice(0, 8);
+    return `
+      <tr>
+        <td><a class="claim-link" href="/claim.html?id=${c.id}">${shortId}</a></td>
+        <td>${c.insured_name || (c.first_name + ' ' + c.last_name)}</td>
+        <td>${(c.loss_types || []).join(', ')}</td>
+        <td>${severityChip(c.severity_score || 0)}</td>
+        <td>${c.flag_count ?? (c.flags ? c.flags.length : 0)}</td>
+        <td>${statusChip(c.status)}</td>
+        <td style="color:var(--iq-muted);font-size:12px">${timeAgo(c.created_at)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ---- Invite ----
+function openInvite(){
+  document.getElementById('invite-err').classList.remove('show');
+  document.getElementById('invite-ok').classList.remove('show');
+  document.getElementById('invite-name').value = '';
+  document.getElementById('invite-email').value = '';
+  document.getElementById('invite-password').value = '';
+  document.getElementById('invite-role').value = 'adjuster';
+  openModal('invite-modal');
+}
+
+async function submitInvite(){
+  const errEl = document.getElementById('invite-err');
+  const okEl = document.getElementById('invite-ok');
+  errEl.classList.remove('show');
+  okEl.classList.remove('show');
+  const u = getUser();
+  if(!u || !u.carrier_id){
+    errEl.textContent = 'Could not determine carrier_id — please sign out and back in.';
+    errEl.classList.add('show');
+    return;
+  }
+  const body = {
+    full_name: document.getElementById('invite-name').value.trim(),
+    email: document.getElementById('invite-email').value.trim(),
+    password: document.getElementById('invite-password').value,
+    role: document.getElementById('invite-role').value,
+    carrier_id: u.carrier_id,
+  };
+  if(!body.full_name || !body.email || !body.password){
+    errEl.textContent = 'All fields required';
+    errEl.classList.add('show');
+    return;
+  }
+  if(body.password.length < 8){
+    errEl.textContent = 'Password must be at least 8 characters';
+    errEl.classList.add('show');
+    return;
+  }
+  const btn = document.getElementById('invite-submit');
+  btn.disabled = true; btn.textContent = 'Creating...';
+  try{
+    await api('/auth/signup', {method:'POST', body:JSON.stringify(body)});
+    okEl.textContent = `Created ${body.email}. They can sign in with this email and the password you set.`;
+    okEl.classList.add('show');
+    setTimeout(refreshAll, 500);
+  }catch(e){
+    errEl.textContent = e.message;
+    errEl.classList.add('show');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Create account';
+  }
+}
+
+// ---- Boot ----
+(function init(){
+  if(getToken()){
+    showDashboard();
+  }else{
+    showLogin();
+  }
+})();
+</script>
+
+<script src="/_footer.js"></script>
+</body>
+</html>
